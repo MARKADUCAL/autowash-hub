@@ -44,6 +44,57 @@ class Post extends GlobalMethods
         return array("code" => $code, "errmsg" => $errmsg);
     }
 
+    private function findNextAvailableCustomerId() {
+        try {
+            // First, try to find gaps in the ID sequence starting from 1
+            $sql = "SELECT MIN(t1.id + 1) as next_id 
+                    FROM customers t1 
+                    LEFT JOIN customers t2 ON t1.id + 1 = t2.id 
+                    WHERE t2.id IS NULL";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute();
+            $result = $statement->fetch(PDO::FETCH_ASSOC);
+            
+            // If gaps found, use the first available ID
+            if ($result['next_id'] !== null) {
+                return (int)$result['next_id'];
+            }
+            
+            // If no gaps found, use the next sequential ID
+            $sql = "SELECT COALESCE(MAX(id) + 1, 1) as next_id FROM customers";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute();
+            $result = $statement->fetch(PDO::FETCH_ASSOC);
+            
+            return (int)$result['next_id'];
+            
+        } catch (\PDOException $e) {
+            error_log("Error finding next available customer ID: " . $e->getMessage());
+            // Fallback: return 1 if there's an error
+            return 1;
+        }
+    }
+
+    private function resetCustomerAutoIncrement() {
+        try {
+            // Reset the auto-increment counter to the next available ID
+            $sql = "SELECT COALESCE(MAX(id) + 1, 1) as next_id FROM customers";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute();
+            $result = $statement->fetch(PDO::FETCH_ASSOC);
+            
+            $nextId = (int)$result['next_id'];
+            
+            // Reset auto-increment to the next available ID
+            $sql = "ALTER TABLE customers AUTO_INCREMENT = ?";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute([$nextId]);
+            
+        } catch (\PDOException $e) {
+            error_log("Error resetting customer auto-increment: " . $e->getMessage());
+            // Continue execution even if reset fails
+        }
+    }
 
     public function register_customer($data)
     {
@@ -62,20 +113,24 @@ class Post extends GlobalMethods
             $sql = "SELECT COUNT(*) FROM customers WHERE email = ?";
             $statement = $this->pdo->prepare($sql);
             $statement->execute([$data->email]);
-        $count = $statement->fetchColumn();
+            $count = $statement->fetchColumn();
 
-        if ($count > 0) {
+            if ($count > 0) {
                 return $this->sendPayload(null, "failed", "Email already registered", 400);
             }
         
-            // Proceed with registration
-            $sql = "INSERT INTO customers (first_name, last_name, email, phone, password) 
-                    VALUES (?, ?, ?, ?, ?)";
+            // Find the next available ID starting from 1
+            $nextId = $this->findNextAvailableCustomerId();
+            
+            // Proceed with registration using custom ID
+            $sql = "INSERT INTO customers (id, first_name, last_name, email, phone, password) 
+                    VALUES (?, ?, ?, ?, ?, ?)";
             
             $statement = $this->pdo->prepare($sql);
             $hashedPassword = password_hash($data->password, PASSWORD_BCRYPT);
 
             $statement->execute([
+                $nextId,
                 $data->first_name,
                 $data->last_name ?? '',
                 $data->email,
@@ -410,7 +465,7 @@ class Post extends GlobalMethods
     }
 
     public function create_booking($data) {
-        // Basic validation
+        // Validate required fields
         if (
             empty($data->customer_id) || 
             empty($data->service_id) || 
@@ -426,12 +481,16 @@ class Post extends GlobalMethods
         }
 
         try {
-            $sql = "INSERT INTO bookings (customer_id, service_id, vehicle_type, nickname, phone, wash_date, wash_time, payment_type, price, notes) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            // Find the next available booking ID starting from 1
+            $nextId = $this->get_next_booking_id();
+            
+            $sql = "INSERT INTO bookings (id, customer_id, service_id, vehicle_type, nickname, phone, wash_date, wash_time, payment_type, price, notes) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $statement = $this->pdo->prepare($sql);
 
             $statement->execute([
+                $nextId,
                 $data->customer_id,
                 $data->service_id,
                 $data->vehicle_type,
@@ -445,8 +504,7 @@ class Post extends GlobalMethods
             ]);
 
             if ($statement->rowCount() > 0) {
-                $booking_id = $this->pdo->lastInsertId();
-                return $this->sendPayload(["booking_id" => $booking_id], "success", "Booking created successfully", 201);
+                return $this->sendPayload(["booking_id" => $nextId], "success", "Booking created successfully", 201);
             } else {
                 return $this->sendPayload(null, "failed", "Failed to create booking", 400);
             }
@@ -459,6 +517,110 @@ class Post extends GlobalMethods
                 "A database error occurred.", 
                 500
             );
+        }
+    }
+
+    /**
+     * Get the next available booking ID starting from 1
+     * This ensures IDs always start from 1 and fill gaps when bookings are deleted
+     */
+    private function get_next_booking_id() {
+        try {
+            // Get all existing booking IDs, sorted
+            $sql = "SELECT id FROM bookings ORDER BY id ASC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $existingIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            
+            // If no bookings exist, start with ID 1
+            if (empty($existingIds)) {
+                return 1;
+            }
+            
+            // Find the first gap in the sequence, starting from 1
+            $expectedId = 1;
+            foreach ($existingIds as $existingId) {
+                if ($existingId != $expectedId) {
+                    // Found a gap, use this ID
+                    return $expectedId;
+                }
+                $expectedId++;
+            }
+            
+            // No gaps found, use the next ID after the highest existing ID
+            return $expectedId;
+            
+        } catch (\PDOException $e) {
+            error_log("Error getting next booking ID: " . $e->getMessage());
+            // Fallback to auto-increment behavior
+            return null;
+        }
+    }
+
+    /**
+     * Delete a booking by ID
+     */
+    public function delete_booking($id) {
+        // Validate booking ID
+        if (!is_numeric($id) || $id <= 0) {
+            return $this->sendPayload(null, "failed", "Invalid booking ID", 400);
+        }
+
+        try {
+            // Check if the booking exists
+            $sql = "SELECT COUNT(*) FROM bookings WHERE id = ?";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute([$id]);
+            $count = $statement->fetchColumn();
+
+            if ($count == 0) {
+                return $this->sendPayload(null, "failed", "Booking not found", 404);
+            }
+            
+            // Delete the booking
+            $sql = "DELETE FROM bookings WHERE id = ?";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute([$id]);
+
+            if ($statement->rowCount() > 0) {
+                // Reset auto-increment if this was the last booking
+                $this->reset_booking_auto_increment();
+                
+                return $this->sendPayload(null, "success", "Booking deleted successfully", 200);
+            } else {
+                return $this->sendPayload(null, "failed", "Failed to delete booking", 400);
+            }
+
+        } catch (\PDOException $e) {
+            error_log("Booking deletion error: " . $e->getMessage());
+            return $this->sendPayload(
+                null, 
+                "failed", 
+                "Database error occurred: " . $e->getMessage(), 
+                500
+            );
+        }
+    }
+
+    /**
+     * Reset the auto-increment counter for bookings table
+     * This ensures the next auto-generated ID starts from 1 when all bookings are deleted
+     */
+    private function reset_booking_auto_increment() {
+        try {
+            // Check if there are any remaining bookings
+            $sql = "SELECT COUNT(*) FROM bookings";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $count = $stmt->fetchColumn();
+            
+            // If no bookings remain, reset the auto-increment to 1
+            if ($count == 0) {
+                $sql = "ALTER TABLE bookings AUTO_INCREMENT = 1";
+                $this->pdo->exec($sql);
+            }
+        } catch (\PDOException $e) {
+            error_log("Error resetting booking auto-increment: " . $e->getMessage());
         }
     }
 
@@ -1074,4 +1236,88 @@ class Post extends GlobalMethods
             );
         }
 	}
+
+    public function delete_customer($id) {
+        // Validate customer ID
+        if (!is_numeric($id) || $id <= 0) {
+            return $this->sendPayload(null, "failed", "Invalid customer ID", 400);
+        }
+
+        try {
+            // Check if the customer exists
+            $sql = "SELECT COUNT(*) FROM customers WHERE id = ?";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute([$id]);
+            $count = $statement->fetchColumn();
+
+            if ($count == 0) {
+                return $this->sendPayload(null, "failed", "Customer not found", 404);
+            }
+            
+            // Check if customer has any related records (bookings, feedback, etc.)
+            // This prevents deletion if customer has associated data
+            $sql = "SELECT 
+                        (SELECT COUNT(*) FROM bookings WHERE customer_id = ?) as booking_count,
+                        (SELECT COUNT(*) FROM customer_feedback WHERE customer_id = ?) as feedback_count";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute([$id, $id]);
+            $relatedData = $statement->fetch(PDO::FETCH_ASSOC);
+            
+            if ($relatedData['booking_count'] > 0 || $relatedData['feedback_count'] > 0) {
+                return $this->sendPayload(
+                    null, 
+                    "failed", 
+                    "Cannot delete customer with existing bookings or feedback. Please archive instead.", 
+                    400
+                );
+            }
+            
+            // Delete the customer
+            $sql = "DELETE FROM customers WHERE id = ?";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute([$id]);
+
+            if ($statement->rowCount() > 0) {
+                // Reset auto-increment counter to maintain proper ID sequence
+                $this->resetCustomerAutoIncrement();
+                
+                return $this->sendPayload(null, "success", "Customer deleted successfully", 200);
+            } else {
+                return $this->sendPayload(null, "failed", "Failed to delete customer", 400);
+            }
+
+        } catch (\PDOException $e) {
+            error_log("Customer deletion error: " . $e->getMessage());
+            return $this->sendPayload(
+                null, 
+                "failed", 
+                "Database error occurred: " . $e->getMessage(), 
+                500
+            );
+        }
+    }
+
+    public function get_customer_id_sequence() {
+        try {
+            $sql = "SELECT id FROM customers ORDER BY id ASC";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute();
+            $ids = $statement->fetchAll(PDO::FETCH_COLUMN);
+            
+            return $this->sendPayload(
+                ['customer_ids' => $ids],
+                "success",
+                "Customer ID sequence retrieved successfully",
+                200
+            );
+        } catch (\PDOException $e) {
+            error_log("Error getting customer ID sequence: " . $e->getMessage());
+            return $this->sendPayload(
+                null,
+                "failed",
+                "Failed to retrieve customer ID sequence: " . $e->getMessage(),
+                500
+            );
+        }
+    }
 }

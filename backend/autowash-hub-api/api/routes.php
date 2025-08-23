@@ -23,6 +23,11 @@ header('Access-Control-Allow-Credentials: true');
 $method = $_SERVER['REQUEST_METHOD'];
 $request = $_SERVER['REQUEST_URI'];
 
+// Handle rewritten URLs from .htaccess
+if (isset($_GET['request'])) {
+    $request = '/' . $_GET['request'];
+}
+
 // Create database connection
 $connection = new Connection();
 $pdo = $connection->connect();
@@ -54,6 +59,12 @@ if ($method === 'GET') {
     
     if (strpos($request, 'get_all_customers') !== false) {
         $result = $get->get_all_customers();
+        echo json_encode($result);
+        exit();
+    }
+    
+    if (strpos($request, 'get_customer_id_sequence') !== false) {
+        $result = $post->get_customer_id_sequence();
         echo json_encode($result);
         exit();
     }
@@ -342,8 +353,13 @@ if ($method === 'POST') {
 
 // Handle PUT requests
 if ($method === 'PUT') {
+    // Debug logging
+    error_log("PUT request received: " . $request);
+    error_log("Request method: " . $method);
+    
     // Get PUT data
     $data = json_decode(file_get_contents("php://input"));
+    error_log("PUT data received: " . json_encode($data));
     
     // Check for JWT token for protected routes
     $headers = getallheaders();
@@ -364,8 +380,17 @@ if ($method === 'PUT') {
     }
 
     if (strpos($request, 'update_booking_status') !== false) {
+        error_log("Processing update_booking_status request");
         $result = $put->update_booking_status($data);
+        error_log("update_booking_status result: " . json_encode($result));
         echo json_encode($result);
+        exit();
+    }
+    
+    // Test endpoint to verify routing
+    if (strpos($request, 'test_put') !== false) {
+        error_log("Test PUT endpoint reached");
+        echo json_encode(['status' => 'success', 'message' => 'PUT routing is working', 'request' => $request]);
         exit();
     }
 
@@ -427,6 +452,18 @@ if ($method === 'DELETE') {
     
     if (strpos($request, 'services') !== false && is_numeric($id)) {
         $result = $post->delete_service($id);
+        echo json_encode($result);
+        exit();
+    }
+    
+    if (strpos($request, 'customers') !== false && is_numeric($id)) {
+        $result = $post->delete_customer($id);
+        echo json_encode($result);
+        exit();
+    }
+    
+    if (strpos($request, 'bookings') !== false && is_numeric($id)) {
+        $result = $post->delete_booking($id);
         echo json_encode($result);
         exit();
     }

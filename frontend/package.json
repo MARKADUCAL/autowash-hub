@@ -8,8 +8,7 @@
     "build:ssr": "ng build --configuration production && ng run autowash-hub:server:production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:autowash-hub": "node dist/autowash-hub/server/server.mjs",
-    "vercel-build": "npm run build:ssr"
+    "serve:ssr:autowash-hub": "node dist/autowash-hub/server/server.mjs"
   },
   "private": true,
   "dependencies": {

@@ -153,41 +153,55 @@ class Put {
 
     public function update_booking_status($data) {
         try {
-            $this->pdo->beginTransaction();
+            // Debug logging
+            error_log("update_booking_status called with data: " . json_encode($data));
             
-            // Get current status
-            $sql = "SELECT status FROM bookings WHERE id = ?";
+            // Handle both 'id' and 'booking_id' field names for compatibility
+            $bookingId = $data->id ?? $data->booking_id ?? null;
+            if (!$bookingId) {
+                throw new Exception("Booking ID is required");
+            }
+            
+            error_log("Using booking ID: " . $bookingId);
+            error_log("New status: " . $data->status);
+            
+            // Check if booking exists first
+            $sql = "SELECT COUNT(*) FROM bookings WHERE id = ?";
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$data->booking_id]);
-            $currentStatus = $stmt->fetchColumn();
+            $stmt->execute([$bookingId]);
+            $bookingExists = $stmt->fetchColumn();
             
-            if (!$currentStatus) {
+            if (!$bookingExists) {
                 throw new Exception("Booking not found");
             }
             
-            // Update booking status
-            $sql = "UPDATE bookings 
-                    SET status = ?, updated_at = CURRENT_TIMESTAMP 
-                    WHERE id = ?";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$data->status, $data->booking_id]);
+            error_log("Booking exists, proceeding with update");
             
-            // Add to booking history
-            $sql = "INSERT INTO booking_history (booking_id, status_from, status_to, changed_by, notes) 
-                    VALUES (?, ?, ?, ?, ?)";
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([
-                $data->booking_id,
-                $currentStatus,
-                $data->status,
-                $data->changed_by ?? 'system',
-                $data->notes ?? null
-            ]);
+            // Normalize status to lowercase for consistency
+            $normalizedStatus = strtolower($data->status);
+            error_log("Normalized status: " . $normalizedStatus);
             
-            $this->pdo->commit();
+            // Simple update without transaction for now
+            $sql = "UPDATE bookings SET status = ? WHERE id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $result = $stmt->execute([$normalizedStatus, $bookingId]);
+            
+            if (!$result) {
+                throw new Exception("Failed to execute UPDATE query");
+            }
+            
+            $affectedRows = $stmt->rowCount();
+            error_log("UPDATE query affected {$affectedRows} rows");
+            
+            if ($affectedRows === 0) {
+                throw new Exception("No rows were updated");
+            }
+            
+            error_log("Booking status updated successfully");
             return $this->sendPayload(null, "success", "Booking status updated successfully", 200);
+            
         } catch (Exception $e) {
-            $this->pdo->rollBack();
+            error_log("Error in update_booking_status: " . $e->getMessage());
             return $this->sendPayload(null, "failed", $e->getMessage(), 500);
         }
     }

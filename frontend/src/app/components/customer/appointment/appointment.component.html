@@ -191,8 +191,123 @@
                 name="washTime"
                 required
                 placeholder="Select wash time"
+                (click)="openTimePicker()"
+                readonly
+                class="time-input-field"
               />
-              <mat-icon matSuffix>schedule</mat-icon>
+              <mat-icon
+                matSuffix
+                class="time-picker-icon"
+                (click)="openTimePicker()"
+                >schedule</mat-icon
+              >
+
+              <!-- Custom Time Picker Overlay -->
+              <div
+                class="time-picker-overlay"
+                *ngIf="showTimePicker"
+                (click)="closeTimePicker($event)"
+              >
+                <div
+                  class="time-picker-panel"
+                  (click)="$event.stopPropagation()"
+                >
+                  <div class="time-picker-header">
+                    <h3>Select Wash Time</h3>
+                    <button class="close-btn" (click)="closeTimePicker($event)">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+
+                  <!-- Manual Time Input -->
+                  <div class="manual-time-section">
+                    <label>Or enter time manually:</label>
+                    <div class="manual-time-inputs">
+                      <input
+                        type="number"
+                        min="0"
+                        max="23"
+                        [(ngModel)]="manualHour"
+                        placeholder="HH"
+                        class="time-input-hour"
+                        (input)="updateManualTime()"
+                      />
+                      <span class="time-separator">:</span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        [(ngModel)]="manualMinute"
+                        placeholder="MM"
+                        class="time-input-minute"
+                        (input)="updateManualTime()"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Available Time Slots -->
+                  <div class="time-slots-section">
+                    <label>Available Time Slots:</label>
+                    <div class="time-slots-grid">
+                      <button
+                        *ngFor="let slot of availableTimeSlots"
+                        class="time-slot-btn"
+                        [class.selected]="isTimeSlotSelected(slot)"
+                        (click)="selectTimeSlot(slot)"
+                        [disabled]="!isTimeSlotAvailable(slot)"
+                      >
+                        {{ formatTimeSlot(slot) }}
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Quick Time Buttons -->
+                  <div class="quick-time-section">
+                    <label>Quick Selection:</label>
+                    <div class="quick-time-buttons">
+                      <button
+                        class="quick-time-btn"
+                        (click)="setQuickTime('09:00')"
+                      >
+                        9:00 AM
+                      </button>
+                      <button
+                        class="quick-time-btn"
+                        (click)="setQuickTime('12:00')"
+                      >
+                        12:00 PM
+                      </button>
+                      <button
+                        class="quick-time-btn"
+                        (click)="setQuickTime('15:00')"
+                      >
+                        3:00 PM
+                      </button>
+                      <button
+                        class="quick-time-btn"
+                        (click)="setQuickTime('17:00')"
+                      >
+                        5:00 PM
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="time-picker-actions">
+                    <button
+                      class="btn-cancel"
+                      (click)="closeTimePicker($event)"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      class="btn-confirm"
+                      (click)="confirmTimeSelection()"
+                    >
+                      Confirm Time
+                    </button>
+                  </div>
+                </div>
+              </div>
             </mat-form-field>
           </div>
         </div>
@@ -235,6 +350,7 @@
               name="notes"
               rows="3"
               placeholder="Any special instructions or additional notes..."
+              style="width: 100%; min-height: 100px; resize: vertical"
             ></textarea>
           </mat-form-field>
         </div>

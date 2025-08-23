@@ -129,6 +129,30 @@ export class BookingService {
     return of(false).pipe(delay(500));
   }
 
+  // Delete a booking permanently
+  deleteBooking(bookingId: string): Observable<boolean> {
+    return this.http
+      .delete<any>(`${environment.apiUrl}/bookings/${bookingId}`)
+      .pipe(
+        map((response) => {
+          if (
+            response &&
+            response.status &&
+            response.status.remarks === 'success'
+          ) {
+            return true;
+          }
+          return false;
+        }),
+        catchError((error) => {
+          console.error('Error deleting booking:', error);
+          return throwError(
+            () => new Error('Failed to delete booking. Please try again later.')
+          );
+        })
+      );
+  }
+
   // Update booking status to paid
   payForBooking(bookingId: string): Observable<boolean> {
     // In a real app, this would call an API endpoint
@@ -190,18 +214,52 @@ export class BookingService {
 
   updateBookingStatus(
     bookingId: number | string,
-    status: BookingStatus | 'Pending' | 'Approved' | 'Rejected' | 'Completed'
+    status:
+      | BookingStatus
+      | 'Pending'
+      | 'Approved'
+      | 'Rejected'
+      | 'Completed'
+      | 'Cancelled'
   ): Observable<any> {
     const normalized = this.normalizeStatus(status);
+
+    console.log('🔧 Service: updateBookingStatus called');
+    console.log('🆔 Booking ID:', bookingId);
+    console.log('📝 Original Status:', status);
+    console.log('🔄 Normalized Status:', normalized);
+    console.log('🌐 API URL:', `${environment.apiUrl}/update_booking_status`);
+
+    const requestData = {
+      id: bookingId,
+      status: normalized,
+    };
+
+    console.log('📤 Request data:', requestData);
+
     return this.http
-      .put<any>(`${environment.apiUrl}/update_booking_status`, {
-        id: bookingId,
-        status: normalized,
-      })
+      .put<any>(`${environment.apiUrl}/update_booking_status`, requestData)
       .pipe(
-        map((response) => response.payload.booking),
+        map((response) => {
+          console.log('📥 Raw backend response:', response);
+
+          // Handle the backend response structure
+          if (
+            response &&
+            response.status &&
+            response.status.remarks === 'success'
+          ) {
+            console.log('✅ Response indicates success');
+            return { success: true, message: response.status.message };
+          } else {
+            console.log('❌ Response indicates failure:', response);
+            throw new Error(
+              response?.status?.message || 'Failed to update booking status'
+            );
+          }
+        }),
         catchError((error) => {
-          console.error('Error updating booking status:', error);
+          console.error('💥 Service error:', error);
           return throwError(
             () => new Error('Failed to update booking status.')
           );
@@ -210,13 +268,20 @@ export class BookingService {
   }
 
   private normalizeStatus(
-    status: BookingStatus | 'Pending' | 'Approved' | 'Rejected' | 'Completed'
-  ): 'Pending' | 'Approved' | 'Rejected' | 'Completed' {
+    status:
+      | BookingStatus
+      | 'Pending'
+      | 'Approved'
+      | 'Rejected'
+      | 'Completed'
+      | 'Cancelled'
+  ): 'Pending' | 'Approved' | 'Rejected' | 'Completed' | 'Cancelled' {
     if (
       status === 'Pending' ||
       status === 'Approved' ||
       status === 'Rejected' ||
-      status === 'Completed'
+      status === 'Completed' ||
+      status === 'Cancelled'
     ) {
       return status;
     }
@@ -229,7 +294,7 @@ export class BookingService {
       case BookingStatus.COMPLETED:
         return 'Completed';
       case BookingStatus.CANCELLED:
-        return 'Rejected';
+        return 'Cancelled';
       default:
         return 'Pending';
     }
