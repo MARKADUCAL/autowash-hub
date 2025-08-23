@@ -480,9 +480,20 @@ class Post extends GlobalMethods
             return $this->sendPayload(null, "failed", "Missing required booking fields", 400);
         }
 
+        // Validate online payment option if Online Payment is selected
+        if ($data->payment_type === 'Online Payment' && empty($data->online_payment_option)) {
+            return $this->sendPayload(null, "failed", "Online payment method is required when selecting Online Payment", 400);
+        }
+
         try {
             // Find the next available booking ID starting from 1
             $nextId = $this->get_next_booking_id();
+            
+            // Prepare payment type string
+            $paymentTypeString = $data->payment_type;
+            if ($data->payment_type === 'Online Payment' && !empty($data->online_payment_option)) {
+                $paymentTypeString = $data->payment_type . ' - ' . $data->online_payment_option;
+            }
             
             $sql = "INSERT INTO bookings (id, customer_id, service_id, vehicle_type, nickname, phone, wash_date, wash_time, payment_type, price, notes) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -498,7 +509,7 @@ class Post extends GlobalMethods
                 $data->phone,
                 $data->wash_date,
                 $data->wash_time,
-                $data->payment_type,
+                $paymentTypeString,
                 $data->price,
                 $data->notes ?? null
             ]);

@@ -25,7 +25,7 @@ export class BookingService {
       additionalPhone: '',
       washDate: '2023-12-15',
       washTime: '10:30',
-      paymentType: 'Credit/Debit Card',
+      paymentType: 'Online Payment - GCash',
       notes: 'Please take care of the rims',
       status: BookingStatus.CONFIRMED,
       dateCreated: '2023-12-01T14:30:00Z',

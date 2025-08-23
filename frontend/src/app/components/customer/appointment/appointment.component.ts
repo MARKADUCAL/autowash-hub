@@ -15,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import {
   VEHICLE_TYPES,
   PAYMENT_TYPES,
+  ONLINE_PAYMENT_OPTIONS,
   BookingForm,
   Booking,
   BookingStatus,
@@ -61,6 +62,7 @@ export class AppointmentComponent implements OnInit {
   vehicleTypes = VEHICLE_TYPES;
   services: Service[] = [];
   paymentTypes = PAYMENT_TYPES;
+  onlinePaymentOptions = ONLINE_PAYMENT_OPTIONS;
 
   // Booking form model
   bookingForm: BookingForm = {
@@ -74,6 +76,7 @@ export class AppointmentComponent implements OnInit {
     washDate: '',
     washTime: '',
     paymentType: '',
+    onlinePaymentOption: '',
     notes: '',
   };
 
@@ -122,6 +125,13 @@ export class AppointmentComponent implements OnInit {
           }, 500); // Small delay to ensure services are loaded
         }
       });
+    }
+  }
+
+  // Handle payment type change
+  onPaymentTypeChange(): void {
+    if (this.bookingForm.paymentType !== 'Online Payment') {
+      this.bookingForm.onlinePaymentOption = '';
     }
   }
 
@@ -218,6 +228,7 @@ export class AppointmentComponent implements OnInit {
       washDate: '',
       washTime: '',
       paymentType: '',
+      onlinePaymentOption: '',
       notes: '',
     };
     this.successMessage = '';
@@ -262,6 +273,7 @@ export class AppointmentComponent implements OnInit {
       wash_date: this.bookingForm.washDate,
       wash_time: this.bookingForm.washTime,
       payment_type: this.bookingForm.paymentType,
+      online_payment_option: this.bookingForm.onlinePaymentOption,
       price: selectedService.price,
       notes: this.bookingForm.notes,
     };
@@ -328,6 +340,14 @@ export class AppointmentComponent implements OnInit {
 
     if (!this.bookingForm.paymentType) {
       this.errorMessage = 'Please select a payment type';
+      return false;
+    }
+
+    if (
+      this.bookingForm.paymentType === 'Online Payment' &&
+      !this.bookingForm.onlinePaymentOption
+    ) {
+      this.errorMessage = 'Please select an online payment method';
       return false;
     }
 

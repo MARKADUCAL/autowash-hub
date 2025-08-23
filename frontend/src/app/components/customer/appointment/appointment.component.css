@@ -1445,3 +1445,108 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Payment Section Styling */
+.form-section .form-row:has(mat-form-field:only-child) {
+  margin-bottom: 0;
+}
+
+.form-section .form-row:has(mat-form-field:only-child) + .form-row {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.form-section
+  .form-row:has(mat-form-field:only-child)
+  + .form-row
+  mat-form-field {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Online Payment Options Styling */
+.online-payment-options {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 15px;
+  border: 1px solid #dee2e6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.online-payment-options::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.online-payment-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+  color: #495057;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.online-payment-header i {
+  color: #667eea;
+  font-size: 16px;
+}
+
+.online-payment-options mat-form-field {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.online-payment-options mat-form-field:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Payment Type Field Enhancement */
+.payment-type-field {
+  position: relative;
+}
+
+.payment-type-field::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
+/* Responsive adjustments for payment section */
+@media (max-width: 768px) {
+  .online-payment-options {
+    padding: 15px;
+    margin-top: 12px;
+  }
+
+  .online-payment-header {
+    font-size: 13px;
+    margin-bottom: 12px;
+  }
+}

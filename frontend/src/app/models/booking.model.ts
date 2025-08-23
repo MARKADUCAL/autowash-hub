@@ -9,6 +9,7 @@ export interface BookingForm {
   washDate: string;
   washTime: string;
   paymentType: string;
+  onlinePaymentOption?: string;
   notes: string;
 }
 
@@ -55,12 +56,9 @@ export const VEHICLE_TYPES = [
   'Commercial Vehicle',
 ];
 
-export const PAYMENT_TYPES = [
-  'Cash on Delivery',
-  'Credit/Debit Card',
-  'Mobile Payment',
-  'Online Banking',
-];
+export const PAYMENT_TYPES = ['Cash', 'Online Payment'];
+
+export const ONLINE_PAYMENT_OPTIONS = ['GCash', 'PayMaya'];
 
 export const WASHING_POINTS = [
   {

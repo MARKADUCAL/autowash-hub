@@ -320,15 +320,45 @@
           </div>
 
           <div class="form-row">
-            <mat-form-field appearance="outline" class="form-field">
+            <mat-form-field
+              appearance="outline"
+              class="form-field payment-type-field"
+            >
               <mat-label>Payment Type*</mat-label>
               <mat-select
                 [(ngModel)]="bookingForm.paymentType"
                 name="paymentType"
                 required
+                (selectionChange)="onPaymentTypeChange()"
               >
                 <mat-option *ngFor="let type of paymentTypes" [value]="type">
                   <i class="fas fa-credit-card"></i> {{ type }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Online Payment Sub-options -->
+          <div
+            class="form-row online-payment-options"
+            *ngIf="bookingForm.paymentType === 'Online Payment'"
+          >
+            <div class="online-payment-header">
+              <i class="fas fa-mobile-alt"></i>
+              <span>Select Payment Method</span>
+            </div>
+            <mat-form-field appearance="outline" class="form-field">
+              <mat-label>Payment Method*</mat-label>
+              <mat-select
+                [(ngModel)]="bookingForm.onlinePaymentOption"
+                name="onlinePaymentOption"
+                required
+              >
+                <mat-option
+                  *ngFor="let option of onlinePaymentOptions"
+                  [value]="option"
+                >
+                  <i class="fas fa-mobile-alt"></i> {{ option }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
