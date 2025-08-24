@@ -208,6 +208,22 @@
               <span class="detail-value">{{ booking.paymentType }}</span>
             </div>
           </div>
+
+          <div class="detail-row">
+            <div class="detail-item">
+              <span class="detail-icon">👤</span>
+              <span class="detail-label">Assigned To</span>
+              <span
+                class="detail-value"
+                [ngClass]="{
+                  'pending-assignment': !hasEmployeeAssigned(booking),
+                  'assigned-employee': hasEmployeeAssigned(booking)
+                }"
+              >
+                {{ getEmployeeInfo(booking) }}
+              </span>
+            </div>
+          </div>
         </div>
 
         <div class="price-section">
@@ -324,6 +340,36 @@
               <span class="label">Description:</span>
               <span class="value">{{
                 selectedBooking.serviceDescription
+              }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-header">
+            <span class="detail-icon">👤</span>
+            <h4>Employee Assignment</h4>
+          </div>
+          <div class="detail-content">
+            <div class="detail-row">
+              <span class="label">Assigned To:</span>
+              <span
+                class="value"
+                [ngClass]="{
+                  'pending-assignment': !hasEmployeeAssigned(selectedBooking),
+                  'assigned-employee': hasEmployeeAssigned(selectedBooking)
+                }"
+              >
+                {{ getEmployeeInfo(selectedBooking) }}
+              </span>
+            </div>
+            <div
+              class="detail-row"
+              *ngIf="hasEmployeeAssigned(selectedBooking)"
+            >
+              <span class="label">Employee ID:</span>
+              <span class="value">{{
+                selectedBooking.assignedEmployeeId
               }}</span>
             </div>
           </div>

@@ -379,4 +379,36 @@ export class TranactionHitoryComponent implements OnInit, OnDestroy {
       return time; // Return original if any error occurs
     }
   }
+
+  getUserInitials(name: string): string {
+    return name
+      .split(' ')
+      .map((word) => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  }
+
+  getEmployeeInfo(booking: any): string {
+    if (
+      booking.assigned_employee_id &&
+      booking.employee_first_name &&
+      booking.employee_last_name
+    ) {
+      const employeeName = `${booking.employee_first_name} ${booking.employee_last_name}`;
+      if (booking.employee_position) {
+        return `${employeeName} (${booking.employee_position})`;
+      }
+      return employeeName;
+    }
+    return 'Pending Assignment';
+  }
+
+  hasEmployeeAssigned(booking: any): boolean {
+    return !!(
+      booking.assigned_employee_id &&
+      booking.employee_first_name &&
+      booking.employee_last_name
+    );
+  }
 }

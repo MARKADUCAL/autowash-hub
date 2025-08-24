@@ -267,6 +267,89 @@ export class BookingService {
       );
   }
 
+  assignEmployeeToBooking(
+    bookingId: number,
+    employeeId: number
+  ): Observable<any> {
+    console.log('🔧 Service: assignEmployeeToBooking called');
+    console.log('🆔 Booking ID:', bookingId);
+    console.log('👤 Employee ID:', employeeId);
+
+    const requestData = {
+      booking_id: bookingId,
+      employee_id: employeeId,
+    };
+
+    console.log('📤 Request data:', requestData);
+
+    return this.http
+      .put<any>(`${environment.apiUrl}/assign_employee_to_booking`, requestData)
+      .pipe(
+        map((response) => {
+          console.log('📥 Raw backend response:', response);
+
+          if (
+            response &&
+            response.status &&
+            response.status.remarks === 'success'
+          ) {
+            console.log('✅ Employee assigned successfully');
+            return { success: true, message: response.status.message };
+          } else {
+            console.log('❌ Assignment failed:', response);
+            throw new Error(
+              response?.status?.message ||
+                'Failed to assign employee to booking'
+            );
+          }
+        }),
+        catchError((error) => {
+          console.error('💥 Service error:', error);
+          return throwError(
+            () => new Error('Failed to assign employee to booking.')
+          );
+        })
+      );
+  }
+
+  getBookingsByEmployee(employeeId: number): Observable<any[]> {
+    console.log('🔧 Service: getBookingsByEmployee called');
+    console.log('👤 Employee ID:', employeeId);
+
+    return this.http
+      .get<any>(
+        `${environment.apiUrl}/get_bookings_by_employee?employee_id=${employeeId}`
+      )
+      .pipe(
+        map((response) => {
+          console.log('📥 Raw backend response:', response);
+
+          if (
+            response &&
+            response.status &&
+            response.status.remarks === 'success' &&
+            response.payload &&
+            response.payload.bookings
+          ) {
+            console.log('✅ Employee bookings retrieved successfully');
+            return response.payload.bookings;
+          } else {
+            console.log('❌ Failed to retrieve employee bookings:', response);
+            throw new Error(
+              response?.status?.message ||
+                'Failed to retrieve employee bookings'
+            );
+          }
+        }),
+        catchError((error) => {
+          console.error('💥 Service error:', error);
+          return throwError(
+            () => new Error('Failed to retrieve employee bookings.')
+          );
+        })
+      );
+  }
+
   private normalizeStatus(
     status:
       | BookingStatus

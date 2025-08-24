@@ -208,13 +208,19 @@ class Get extends GlobalMethods {
                         b.vehicle_type as vehicleType,
                         b.payment_type as paymentType,
                         b.notes,
+                        b.assigned_employee_id,
                         s.name as serviceName,
                         s.description as serviceDescription,
-                        s.duration_minutes as serviceDuration
+                        s.duration_minutes as serviceDuration,
+                        e.first_name as employee_first_name,
+                        e.last_name as employee_last_name,
+                        e.position as employee_position
                     FROM 
                         bookings b
                     JOIN 
                         services s ON b.service_id = s.id
+                    LEFT JOIN 
+                        employees e ON b.assigned_employee_id = e.id
                     WHERE 
                         b.customer_id = ?
                     ORDER BY 
@@ -235,6 +241,53 @@ class Get extends GlobalMethods {
                 null,
                 "failed",
                 "Failed to retrieve bookings: " . $e->getMessage(),
+                500
+            );
+        }
+    }
+
+    public function get_bookings_by_employee($employeeId) {
+        try {
+            $sql = "SELECT 
+                        b.id,
+                        b.wash_date as washDate,
+                        b.wash_time as washTime,
+                        b.status,
+                        b.price,
+                        b.vehicle_type as vehicleType,
+                        b.payment_type as paymentType,
+                        b.notes,
+                        b.assigned_employee_id,
+                        s.name as serviceName,
+                        s.description as serviceDescription,
+                        s.duration_minutes as serviceDuration,
+                        TRIM(CONCAT(COALESCE(c.first_name,''), ' ', COALESCE(c.last_name,''))) as customerName
+                    FROM 
+                        bookings b
+                    JOIN 
+                        services s ON b.service_id = s.id
+                    LEFT JOIN 
+                        customers c ON b.customer_id = c.id
+                    WHERE 
+                        b.assigned_employee_id = ?
+                    ORDER BY 
+                        b.wash_date DESC, b.wash_time DESC";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$employeeId]);
+            $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            return $this->sendPayload(
+                ['bookings' => $bookings],
+                "success",
+                "Employee bookings retrieved successfully",
+                200
+            );
+        } catch (\PDOException $e) {
+            return $this->sendPayload(
+                null,
+                "failed",
+                "Failed to retrieve employee bookings: " . $e->getMessage(),
                 500
             );
         }

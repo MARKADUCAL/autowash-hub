@@ -235,6 +235,18 @@ if ($method === 'GET') {
         }
         exit();
     }
+
+    if (strpos($request, 'get_bookings_by_employee') !== false) {
+        if (isset($_GET['employee_id'])) {
+            $employeeId = $_GET['employee_id'];
+            $result = $get->get_bookings_by_employee($employeeId);
+            echo json_encode($result);
+        } else {
+            http_response_code(400);
+            echo json_encode(['message' => 'Employee ID is required.']);
+        }
+        exit();
+    }
 }
 
 // Handle the request
@@ -383,6 +395,14 @@ if ($method === 'PUT') {
         error_log("Processing update_booking_status request");
         $result = $put->update_booking_status($data);
         error_log("update_booking_status result: " . json_encode($result));
+        echo json_encode($result);
+        exit();
+    }
+
+    if (strpos($request, 'assign_employee_to_booking') !== false) {
+        error_log("Processing assign_employee_to_booking request");
+        $result = $put->assign_employee_to_booking($data);
+        error_log("assign_employee_to_booking result: " . json_encode($result));
         echo json_encode($result);
         exit();
     }

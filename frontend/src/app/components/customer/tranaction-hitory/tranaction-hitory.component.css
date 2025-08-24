@@ -1042,6 +1042,62 @@
   box-shadow: none;
 }
 
+/* Employee Assignment Styling */
+.pending-assignment {
+  color: #f59e0b;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.detail-item .detail-value.pending-assignment {
+  color: #f59e0b;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.detail-card .detail-content .detail-row .value.pending-assignment {
+  color: #f59e0b;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.assigned-employee {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.detail-item .detail-value.assigned-employee {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.detail-card .detail-content .detail-row .value.assigned-employee {
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* Employee Assignment Card Styling */
+.detail-card .detail-header .detail-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 20px;
+}
+
+/* Enhanced Employee Info Display */
+.detail-item .detail-value.assigned-employee::before {
+  content: "✓ ";
+  color: #10b981;
+  font-weight: bold;
+}
+
+.detail-item .detail-value.pending-assignment::before {
+  content: "⏳ ";
+  color: #f59e0b;
+  font-weight: bold;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .transaction-history-container {

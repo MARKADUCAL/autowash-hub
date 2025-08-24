@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -15,9 +15,10 @@ import {
   MatDialogRef,
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
-import { Inject } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { BookingService } from '../../../services/booking.service';
+import { environment } from '../../../../environments/environment';
+import { Employee } from '../../../models/booking.model';
 
 interface CarWashBooking {
   id: number;
@@ -52,15 +53,19 @@ export class CarWashBookingComponent implements OnInit {
   bookings: CarWashBooking[] = [];
 
   selectedStatus: string = 'All';
+  employees: Employee[] = [];
+  private apiUrl = environment.apiUrl;
 
   constructor(
-    private snackBar: MatSnackBar,
     private bookingService: BookingService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private http: HttpClient,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
     this.loadBookings();
+    this.loadEmployees();
   }
 
   addBooking(): void {
@@ -72,14 +77,34 @@ export class CarWashBookingComponent implements OnInit {
   }
 
   approveBooking(booking: CarWashBooking): void {
-    const prev = booking.status;
-    booking.status = 'Approved';
-    this.bookingService.updateBookingStatus(booking.id, 'Approved').subscribe({
-      next: () => this.showNotification('Booking approved successfully'),
-      error: (err) => {
-        booking.status = prev;
-        this.showNotification(err.message || 'Failed to approve booking');
+    // Open employee assignment dialog instead of directly approving
+    const dialogRef = this.dialog.open(EmployeeAssignmentDialogComponent, {
+      width: '500px',
+      data: {
+        booking: booking,
+        employees: this.employees,
       },
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && result.employeeId) {
+        // Assign employee and approve booking
+        this.bookingService
+          .assignEmployeeToBooking(booking.id, result.employeeId)
+          .subscribe({
+            next: () => {
+              this.showNotification(
+                'Employee assigned and booking approved successfully'
+              );
+              this.loadBookings(); // Refresh the list
+            },
+            error: (err) => {
+              this.showNotification(
+                err.message || 'Failed to assign employee and approve booking'
+              );
+            },
+          });
+      }
     });
   }
 
@@ -172,6 +197,11 @@ export class CarWashBookingComponent implements OnInit {
     return nick.length > 0 ? nick : 'Customer';
   }
 
+  formatDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
+  }
+
   private openBookingDialog(booking: CarWashBooking, mode: 'view' | 'edit') {
     const dialogRef = this.dialog.open(BookingDetailsDialogComponent, {
       width: '520px',
@@ -198,6 +228,34 @@ export class CarWashBookingComponent implements OnInit {
           });
         }
       );
+  }
+
+  loadEmployees(): void {
+    this.http.get(`${this.apiUrl}/get_all_employees`).subscribe({
+      next: (response: any) => {
+        if (
+          response &&
+          response.status &&
+          response.status.remarks === 'success' &&
+          response.payload &&
+          response.payload.employees
+        ) {
+          this.employees = response.payload.employees.map((employee: any) => ({
+            id: employee.id,
+            employeeId: employee.employee_id,
+            name: `${employee.first_name} ${employee.last_name}`,
+            email: employee.email,
+            phone: employee.phone || 'N/A',
+            role: employee.position || 'Employee',
+            status: 'Active',
+            registrationDate: this.formatDate(employee.created_at),
+          }));
+        }
+      },
+      error: (error) => {
+        console.error('Error loading employees:', error);
+      },
+    });
   }
 }
 
@@ -427,5 +485,214 @@ export class BookingDetailsDialogComponent {
       id: this.data.booking.id,
       status: this.editableStatus,
     });
+  }
+}
+
+@Component({
+  selector: 'app-employee-assignment-dialog',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatSelectModule,
+    MatIconModule,
+    MatFormFieldModule,
+    MatDividerModule,
+    MatChipsModule,
+  ],
+  template: `
+    <h2 mat-dialog-title class="dialog-title">Assign Employee to Booking</h2>
+    <div mat-dialog-content class="dialog-content">
+      <div class="header-block">
+        <div class="avatar">
+          {{ (data.booking.customerName || 'C')[0] | uppercase }}
+        </div>
+        <div class="title-area">
+          <div class="customer-name">{{ data.booking.customerName }}</div>
+          <div class="subtitle">
+            {{ data.booking.serviceType || 'Standard Wash' }}
+          </div>
+        </div>
+        <mat-chip-set class="status-chip">
+          <mat-chip class="status-pending" appearance="outlined">
+            <mat-icon inline>hourglass_empty</mat-icon>
+            Pending
+          </mat-chip>
+        </mat-chip-set>
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <div class="details-grid">
+        <div class="detail">
+          <mat-icon>calendar_today</mat-icon>
+          <div class="detail-text">
+            <div class="label">Date</div>
+            <div class="value">{{ data.booking.date }}</div>
+          </div>
+        </div>
+        <div class="detail">
+          <mat-icon>access_time</mat-icon>
+          <div class="detail-text">
+            <div class="label">Time</div>
+            <div class="value">{{ data.booking.time }}</div>
+          </div>
+        </div>
+        <div class="detail">
+          <mat-icon>directions_car</mat-icon>
+          <div class="detail-text">
+            <div class="label">Vehicle</div>
+            <div class="value">{{ data.booking.vehicleType }}</div>
+          </div>
+        </div>
+        <div class="detail">
+          <mat-icon>attach_money</mat-icon>
+          <div class="detail-text">
+            <div class="label">Price</div>
+            <div class="value">{{ data.booking.price | currency }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="assignment-section">
+        <mat-divider></mat-divider>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Select Employee *</mat-label>
+            <mat-select [(ngModel)]="selectedEmployeeId" required>
+              <mat-option
+                *ngFor="let employee of data.employees"
+                [value]="employee.id"
+              >
+                {{ employee.name }} - {{ employee.role }}
+              </mat-option>
+            </mat-select>
+            <mat-error *ngIf="!selectedEmployeeId"
+              >Employee selection is required</mat-error
+            >
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+    <div mat-dialog-actions align="end" class="actions">
+      <button mat-button (click)="onClose()">Cancel</button>
+      <button
+        mat-raised-button
+        color="primary"
+        [disabled]="!selectedEmployeeId"
+        (click)="onAssign()"
+      >
+        Assign & Approve
+      </button>
+    </div>
+  `,
+  styles: [
+    `
+      .dialog-title {
+        margin: 0;
+      }
+      .header-block {
+        display: grid;
+        grid-template-columns: 48px 1fr auto;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #1976d2;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 18px;
+      }
+      .title-area {
+        display: flex;
+        flex-direction: column;
+      }
+      .customer-name {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .subtitle {
+        font-size: 13px;
+        color: #666;
+      }
+      .status-chip :where(mat-chip) {
+        font-weight: 600;
+      }
+      .status-pending {
+        color: #ffa000;
+        border-color: #ffa000;
+      }
+
+      .details-grid {
+        margin-top: 12px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .detail {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 6px 0;
+      }
+      .detail mat-icon {
+        color: #666;
+      }
+      .detail .label {
+        font-size: 12px;
+        color: #777;
+      }
+      .detail .value {
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .assignment-section {
+        margin-top: 12px;
+      }
+      .form-row {
+        margin-top: 12px;
+      }
+      .form-row .full {
+        width: 100%;
+      }
+
+      .actions {
+        padding-top: 8px;
+      }
+    `,
+  ],
+})
+export class EmployeeAssignmentDialogComponent {
+  selectedEmployeeId: number | null = null;
+
+  constructor(
+    public dialogRef: MatDialogRef<EmployeeAssignmentDialogComponent>,
+    @Inject(MAT_DIALOG_DATA)
+    public data: {
+      booking: any;
+      employees: Employee[];
+    }
+  ) {}
+
+  onClose(): void {
+    this.dialogRef.close();
+  }
+
+  onAssign(): void {
+    if (this.selectedEmployeeId) {
+      this.dialogRef.close({
+        employeeId: this.selectedEmployeeId,
+      });
+    }
   }
 }

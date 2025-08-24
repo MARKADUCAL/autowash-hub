@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import {
   MatDialog,
@@ -13,8 +14,14 @@ import {
   MAT_DIALOG_DATA,
 } from '@angular/material/dialog';
 import { Inject } from '@angular/core';
-import { HttpClientModule } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpHeaders,
+  HttpClientModule,
+} from '@angular/common/http';
 import { BookingService } from '../../../services/booking.service';
+import { environment } from '../../../../environments/environment';
+import { Router } from '@angular/router';
 
 interface CarWashBooking {
   id: number;
@@ -38,6 +45,7 @@ interface CarWashBooking {
     MatButtonModule,
     MatIconModule,
     MatSelectModule,
+    MatProgressSpinnerModule,
     HttpClientModule,
     MatDialogModule,
   ],
@@ -47,11 +55,16 @@ interface CarWashBooking {
 export class CarWashBookingComponent implements OnInit {
   bookings: CarWashBooking[] = [];
   selectedStatus: string = 'All';
+  loading: boolean = false;
+  error: string | null = null;
+  private apiUrl = environment.apiUrl;
 
   constructor(
     private snackBar: MatSnackBar,
     private bookingService: BookingService,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private http: HttpClient,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -132,28 +145,52 @@ export class CarWashBookingComponent implements OnInit {
   }
 
   private loadBookings(): void {
-    this.bookingService.getAllBookings().subscribe({
-      next: (bookings) => {
-        this.bookings = bookings.map((b: any, idx: number) => ({
-          id: Number(b.id ?? idx + 1),
-          customerName: this.resolveCustomerName(b.customerName, b.nickname),
-          vehicleType: b.vehicleType ?? 'Unknown',
-          date: b.washDate ?? '',
-          time: b.washTime ?? '',
-          status: (b.status ?? 'Pending') as
-            | 'Pending'
-            | 'Approved'
-            | 'Rejected'
-            | 'Completed',
-          serviceType: b.serviceName ?? 'Standard Wash',
-          price: b.price ? Number(b.price) : undefined,
-          imageUrl: 'assets/images/profile-placeholder.jpg',
-        }));
-      },
-      error: (err) => {
-        this.showNotification(err.message || 'Failed to load bookings');
-      },
-    });
+    this.loading = true;
+    this.error = null;
+
+    // Get current employee ID from localStorage
+    const employeeData = localStorage.getItem('employee_data');
+    if (!employeeData) {
+      this.error = 'Employee not logged in';
+      this.loading = false;
+      return;
+    }
+
+    try {
+      const employee = JSON.parse(employeeData);
+      const employeeId = employee.id;
+
+      // Load bookings assigned to this employee
+      this.bookingService.getBookingsByEmployee(employeeId).subscribe({
+        next: (bookings) => {
+          this.bookings = bookings.map((b: any, idx: number) => ({
+            id: Number(b.id ?? idx + 1),
+            customerName: this.resolveCustomerName(b.customerName, b.nickname),
+            vehicleType: b.vehicleType ?? 'Unknown',
+            date: b.washDate ?? '',
+            time: b.washTime ?? '',
+            status: (b.status ?? 'Pending') as
+              | 'Pending'
+              | 'Approved'
+              | 'Rejected'
+              | 'Completed',
+            serviceType: b.serviceName ?? 'Standard Wash',
+            price: b.price ? Number(b.price) : undefined,
+            imageUrl: 'assets/images/profile-placeholder.jpg',
+          }));
+          this.loading = false;
+        },
+        error: (err) => {
+          this.error = err.message || 'Failed to load bookings';
+          this.loading = false;
+          console.error('Error loading employee bookings:', err);
+        },
+      });
+    } catch (error) {
+      this.error = 'Failed to parse employee data';
+      this.loading = false;
+      console.error('Error parsing employee data:', error);
+    }
   }
 
   private resolveCustomerName(dbFullName?: string, nickname?: string): string {

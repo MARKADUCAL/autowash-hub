@@ -206,6 +206,66 @@ class Put {
         }
     }
 
+    public function assign_employee_to_booking($data) {
+        try {
+            // Debug logging
+            error_log("assign_employee_to_booking called with data: " . json_encode($data));
+            
+            // Validate required fields
+            if (!isset($data->booking_id) || !isset($data->employee_id)) {
+                throw new Exception("Booking ID and Employee ID are required");
+            }
+            
+            $bookingId = $data->booking_id;
+            $employeeId = $data->employee_id;
+            
+            error_log("Assigning employee {$employeeId} to booking {$bookingId}");
+            
+            // Check if booking exists
+            $sql = "SELECT COUNT(*) FROM bookings WHERE id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$bookingId]);
+            $bookingExists = $stmt->fetchColumn();
+            
+            if (!$bookingExists) {
+                throw new Exception("Booking not found");
+            }
+            
+            // Check if employee exists
+            $sql = "SELECT COUNT(*) FROM employees WHERE id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$employeeId]);
+            $employeeExists = $stmt->fetchColumn();
+            
+            if (!$employeeExists) {
+                throw new Exception("Employee not found");
+            }
+            
+            // Update booking with employee assignment and status
+            $sql = "UPDATE bookings SET assigned_employee_id = ?, status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $result = $stmt->execute([$employeeId, $bookingId]);
+            
+            if (!$result) {
+                throw new Exception("Failed to assign employee to booking");
+            }
+            
+            $affectedRows = $stmt->rowCount();
+            error_log("Employee assignment affected {$affectedRows} rows");
+            
+            if ($affectedRows === 0) {
+                throw new Exception("No rows were updated");
+            }
+            
+            error_log("Employee assigned to booking successfully");
+            return $this->sendPayload(null, "success", "Employee assigned to booking successfully", 200);
+            
+        } catch (Exception $e) {
+            error_log("Error in assign_employee_to_booking: " . $e->getMessage());
+            return $this->sendPayload(null, "failed", $e->getMessage(), 500);
+        }
+    }
+
     // New update methods for the updated database schema
     public function update_vehicle_type($data) {
         try {
