@@ -169,7 +169,7 @@
 }
 
 .form-row.single-field .form-field {
-  max-width: 60%;
+  max-width: 48%;
 }
 
 /* Form Fields */
@@ -212,7 +212,7 @@
 }
 
 .full-width {
-  grid-column: 1 / -1;
+  width: 100%;
 }
 
 /* Material Design Overrides */

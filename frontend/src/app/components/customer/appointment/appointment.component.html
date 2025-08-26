@@ -214,7 +214,13 @@
                 >
                   <div class="time-picker-header">
                     <h3>Select Wash Time</h3>
-                    <button class="close-btn" (click)="closeTimePicker($event)">
+                    <button
+                      class="close-btn"
+                      type="button"
+                      title="Close time picker"
+                      aria-label="Close time picker"
+                      (click)="closeTimePicker($event)"
+                    >
                       <i class="fas fa-times"></i>
                     </button>
                   </div>
@@ -255,6 +261,7 @@
                         [class.selected]="isTimeSlotSelected(slot)"
                         (click)="selectTimeSlot(slot)"
                         [disabled]="!isTimeSlotAvailable(slot)"
+                        type="button"
                       >
                         {{ formatTimeSlot(slot) }}
                       </button>
@@ -268,24 +275,28 @@
                       <button
                         class="quick-time-btn"
                         (click)="setQuickTime('09:00')"
+                        type="button"
                       >
                         9:00 AM
                       </button>
                       <button
                         class="quick-time-btn"
                         (click)="setQuickTime('12:00')"
+                        type="button"
                       >
                         12:00 PM
                       </button>
                       <button
                         class="quick-time-btn"
                         (click)="setQuickTime('15:00')"
+                        type="button"
                       >
                         3:00 PM
                       </button>
                       <button
                         class="quick-time-btn"
                         (click)="setQuickTime('17:00')"
+                        type="button"
                       >
                         5:00 PM
                       </button>
@@ -296,12 +307,14 @@
                     <button
                       class="btn-cancel"
                       (click)="closeTimePicker($event)"
+                      type="button"
                     >
                       Cancel
                     </button>
                     <button
                       class="btn-confirm"
                       (click)="confirmTimeSelection()"
+                      type="button"
                     >
                       Confirm Time
                     </button>
@@ -378,9 +391,9 @@
               matInput
               [(ngModel)]="bookingForm.notes"
               name="notes"
-              rows="3"
+              rows="10"
               placeholder="Any special instructions or additional notes..."
-              style="width: 100%; min-height: 100px; resize: vertical"
+              class="notes-textarea"
             ></textarea>
           </mat-form-field>
         </div>
