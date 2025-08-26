@@ -19,6 +19,17 @@ interface Employee {
   registrationDate?: string;
 }
 
+interface NewEmployee {
+  employee_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirm_password: string;
+  position: string;
+}
+
 @Component({
   selector: 'app-employee-management',
   standalone: true,
@@ -36,7 +47,7 @@ interface Employee {
 export class EmployeeManagementComponent implements OnInit {
   employees: Employee[] = [];
   isAddModalOpen = false;
-  newEmployee: Employee = this.createEmptyEmployee();
+  newEmployee: NewEmployee = this.createEmptyEmployee();
   loading: boolean = true;
   error: string | null = null;
   private apiUrl = environment.apiUrl;
@@ -47,7 +58,10 @@ export class EmployeeManagementComponent implements OnInit {
 
   // Add state for edit modal
   isEditModalOpen = false;
-  editEmployeeData: Employee = this.createEmptyEmployee();
+  editEmployeeData: Employee = this.createEmptyEmployeeForEdit();
+
+  // Add state for submission
+  isSubmitting: boolean = false;
 
   constructor(
     private snackBar: MatSnackBar,
@@ -128,19 +142,45 @@ export class EmployeeManagementComponent implements OnInit {
 
   submitEmployeeForm(): void {
     if (this.validateEmployeeForm()) {
-      // Generate a new ID
-      this.newEmployee.id = this.generateEmployeeId();
+      this.isSubmitting = true;
 
-      // Add employee to the list
-      this.employees.push({ ...this.newEmployee });
+      const employeeData = {
+        employee_id: this.newEmployee.employee_id,
+        first_name: this.newEmployee.first_name,
+        last_name: this.newEmployee.last_name,
+        email: this.newEmployee.email,
+        phone: this.newEmployee.phone,
+        password: this.newEmployee.password,
+        position: this.newEmployee.position,
+      };
 
-      // Show success message
-      this.showNotification('Employee added successfully');
-
-      // Close the modal
-      this.closeAddEmployeeModal();
+      this.http
+        .post(`${this.apiUrl}/register_employee`, employeeData)
+        .subscribe({
+          next: (response: any) => {
+            this.isSubmitting = false;
+            if (
+              response &&
+              response.status &&
+              response.status.remarks === 'success'
+            ) {
+              this.showNotification('Employee created successfully');
+              this.closeAddEmployeeModal();
+              this.loadEmployees(); // Reload the list
+            } else {
+              this.showNotification(
+                response?.status?.message || 'Failed to create employee'
+              );
+            }
+          },
+          error: (error) => {
+            this.isSubmitting = false;
+            console.error('Error creating employee:', error);
+            this.showNotification('Error creating employee. Please try again.');
+          },
+        });
     } else {
-      this.showNotification('Please fill all required fields');
+      this.showNotification('Please fill all required fields correctly');
     }
   }
 
@@ -210,20 +250,33 @@ export class EmployeeManagementComponent implements OnInit {
 
   private validateEmployeeForm(): boolean {
     return !!(
-      this.newEmployee.name &&
-      this.newEmployee.role &&
+      this.newEmployee.employee_id &&
+      this.newEmployee.first_name &&
+      this.newEmployee.last_name &&
+      this.newEmployee.email &&
       this.newEmployee.phone &&
-      this.newEmployee.status
+      this.newEmployee.password &&
+      this.newEmployee.confirm_password &&
+      this.newEmployee.position &&
+      this.newEmployee.password === this.newEmployee.confirm_password &&
+      this.newEmployee.password.length >= 6
     );
   }
 
-  private generateEmployeeId(): number {
-    // Find the maximum ID and add 1
-    const maxId = Math.max(...this.employees.map((e) => e.id), 0);
-    return maxId + 1;
+  private createEmptyEmployee(): NewEmployee {
+    return {
+      employee_id: '',
+      first_name: '',
+      last_name: '',
+      email: '',
+      phone: '',
+      password: '',
+      confirm_password: '',
+      position: '',
+    };
   }
 
-  private createEmptyEmployee(): Employee {
+  private createEmptyEmployeeForEdit(): Employee {
     return {
       id: 0,
       name: '',

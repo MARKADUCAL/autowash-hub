@@ -115,35 +115,55 @@
       <div class="modal-body">
         <form class="employee-form" (ngSubmit)="submitEmployeeForm()">
           <div class="form-group">
-            <label for="name">Full Name</label>
+            <label for="employee-id">Employee ID *</label>
             <input
               type="text"
-              id="name"
-              name="name"
-              [(ngModel)]="newEmployee.name"
+              id="employee-id"
+              name="employee-id"
+              [(ngModel)]="newEmployee.employee_id"
               required
-              placeholder="Enter employee name"
+              placeholder="Enter employee ID (e.g., EMP-001)"
             />
           </div>
 
           <div class="form-group">
-            <label for="role">Role</label>
-            <select
-              id="role"
-              name="role"
-              [(ngModel)]="newEmployee.role"
+            <label for="first-name">First Name *</label>
+            <input
+              type="text"
+              id="first-name"
+              name="first-name"
+              [(ngModel)]="newEmployee.first_name"
               required
-            >
-              <option value="" disabled selected>Select role</option>
-              <option value="Carwasher">Carwasher</option>
-              <option value="Supervisor">Supervisor</option>
-              <option value="Cashier">Cashier</option>
-              <option value="Manager">Manager</option>
-            </select>
+              placeholder="Enter first name"
+            />
           </div>
 
           <div class="form-group">
-            <label for="phone">Phone Number</label>
+            <label for="last-name">Last Name *</label>
+            <input
+              type="text"
+              id="last-name"
+              name="last-name"
+              [(ngModel)]="newEmployee.last_name"
+              required
+              placeholder="Enter last name"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              [(ngModel)]="newEmployee.email"
+              required
+              placeholder="Enter email address"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone Number *</label>
             <input
               type="tel"
               id="phone"
@@ -155,16 +175,45 @@
           </div>
 
           <div class="form-group">
-            <label for="status">Status</label>
+            <label for="position">Position *</label>
             <select
-              id="status"
-              name="status"
-              [(ngModel)]="newEmployee.status"
+              id="position"
+              name="position"
+              [(ngModel)]="newEmployee.position"
               required
             >
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
+              <option value="" disabled selected>Select position</option>
+              <option value="Carwasher">Carwasher</option>
+              <option value="Supervisor">Supervisor</option>
+              <option value="Cashier">Cashier</option>
+              <option value="Manager">Manager</option>
             </select>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password *</label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              [(ngModel)]="newEmployee.password"
+              required
+              placeholder="Enter password (min 6 characters)"
+              minlength="6"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="confirm-password">Confirm Password *</label>
+            <input
+              type="password"
+              id="confirm-password"
+              name="confirm-password"
+              [(ngModel)]="newEmployee.confirm_password"
+              required
+              placeholder="Confirm password"
+              minlength="6"
+            />
           </div>
 
           <div class="form-actions">
@@ -172,10 +221,13 @@
               type="button"
               class="cancel-btn"
               (click)="closeAddEmployeeModal()"
+              [disabled]="isSubmitting"
             >
               Cancel
             </button>
-            <button type="submit" class="save-btn">Save Employee</button>
+            <button type="submit" class="save-btn" [disabled]="isSubmitting">
+              {{ isSubmitting ? "Creating..." : "Save Employee" }}
+            </button>
           </div>
         </form>
       </div>
