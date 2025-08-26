@@ -1,16 +1,13 @@
-import { createRequestHandler } from "@angular/ssr/node";
 import express from "express";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const distFolder = resolve(__dirname, "../dist/autowash-hub");
-const serverDistFolder = resolve(distFolder, "server");
-const browserDistFolder = resolve(distFolder, "browser");
+const browserDistFolder = resolve(__dirname, "../dist/autowash-hub/browser");
 
 const app = express();
 
-// Serve static files from /browser
+// Serve static files
 app.use(
   express.static(browserDistFolder, {
     maxAge: "1y",
@@ -19,14 +16,17 @@ app.use(
   })
 );
 
-// Create the Angular SSR request handler
-const requestHandler = createRequestHandler({
-  distFolder,
-  serverDistFolder,
-  browserDistFolder,
+// Try to use SSR handler if available, otherwise fallback to SPA
+app.use("*", async (req, res, next) => {
+  try {
+    const { reqHandler } = await import(
+      "../dist/autowash-hub/server/server.mjs"
+    );
+    return reqHandler(req, res, next);
+  } catch (error) {
+    // Fallback to SPA: serve index.html
+    res.sendFile(resolve(browserDistFolder, "index.html"));
+  }
 });
-
-// Handle all requests with Angular SSR
-app.use("*", requestHandler);
 
 export default app;
