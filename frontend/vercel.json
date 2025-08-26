@@ -2,15 +2,10 @@
   "buildCommand": "npm run build:ssr",
   "outputDirectory": "dist/autowash-hub",
   "framework": "angular",
-  "functions": {
-    "dist/autowash-hub/server/server.mjs": {
-      "runtime": "@vercel/node@3.0.0"
-    }
-  },
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/dist/autowash-hub/server/server.mjs"
+      "destination": "/api/$1"
     }
   ]
 }
