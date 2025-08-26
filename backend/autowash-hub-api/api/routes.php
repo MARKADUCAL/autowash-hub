@@ -165,11 +165,7 @@ if ($method === 'GET') {
         exit();
     }
 
-    if (strpos($request, 'get_promotions') !== false) {
-        $result = $get->get_promotions();
-        echo json_encode($result);
-        exit();
-    }
+
 
     if (strpos($request, 'get_service_categories') !== false) {
         $result = $get->get_service_categories();
@@ -198,19 +194,7 @@ if ($method === 'GET') {
         exit();
     }
 
-    if (strpos($request, 'get_notifications') !== false) {
-        if (isset($_GET['user_id']) && isset($_GET['user_type'])) {
-            $userId = $_GET['user_id'];
-            $userType = $_GET['user_type'];
-            $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : 20;
-            $result = $get->get_notifications($userId, $userType, $limit);
-            echo json_encode($result);
-        } else {
-            http_response_code(400);
-            echo json_encode(['message' => 'User ID and user type are required.']);
-        }
-        exit();
-    }
+
 
     if (strpos($request, 'get_booking_details') !== false) {
         if (isset($_GET['booking_id'])) {
@@ -321,10 +305,7 @@ if ($method === 'POST') {
         exit();
     }
 
-    if (strpos($request, 'add_promotion') !== false) {
-        $result = $post->add_promotion($data);
-        exit();
-    }
+
 
     if (strpos($request, 'add_service_category') !== false) {
         $result = $post->add_service_category($data);
@@ -344,17 +325,7 @@ if ($method === 'POST') {
         exit();
     }
 
-    if (strpos($request, 'add_notification') !== false) {
-        $result = $post->add_notification($data);
-        echo json_encode($result);
-        exit();
-    }
 
-    if (strpos($request, 'add_booking_promotion') !== false) {
-        $result = $post->add_booking_promotion($data);
-        echo json_encode($result);
-        exit();
-    }
 
     if (strpos($request, 'add_booking_history') !== false) {
         $result = $post->add_booking_history($data);
@@ -433,11 +404,7 @@ if ($method === 'PUT') {
         exit();
     }
 
-    if (strpos($request, 'update_promotion') !== false) {
-        $result = $put->update_promotion($data);
-        echo json_encode($result);
-        exit();
-    }
+
 
     if (strpos($request, 'update_service_category') !== false) {
         $result = $put->update_service_category($data);
@@ -451,11 +418,7 @@ if ($method === 'PUT') {
         exit();
     }
 
-    if (strpos($request, 'update_notification_status') !== false) {
-        $result = $put->update_notification_status($data);
-        echo json_encode($result);
-        exit();
-    }
+
 
     if (strpos($request, 'update_system_setting') !== false) {
         $result = $put->update_system_setting($data);

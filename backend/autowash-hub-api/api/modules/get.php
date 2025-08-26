@@ -578,35 +578,7 @@ class Get extends GlobalMethods {
         }
     }
 
-    public function get_promotions() {
-        try {
-            $currentDate = date('Y-m-d');
-            $sql = "SELECT id, name, description, discount_percentage, start_date, end_date, is_active 
-                    FROM promotions 
-                    WHERE is_active = 1 
-                    AND start_date <= ? 
-                    AND end_date >= ?
-                    ORDER BY discount_percentage DESC";
-            
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$currentDate, $currentDate]);
-            $promotions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            return $this->sendPayload(
-                ['promotions' => $promotions],
-                "success",
-                "Active promotions retrieved successfully",
-                200
-            );
-        } catch (\PDOException $e) {
-            return $this->sendPayload(
-                null,
-                "failed",
-                "Failed to retrieve promotions: " . $e->getMessage(),
-                500
-            );
-        }
-    }
+
 
     public function get_service_categories() {
         try {
@@ -753,33 +725,7 @@ class Get extends GlobalMethods {
         }
     }
 
-    public function get_notifications($userId, $userType, $limit = 20) {
-        try {
-            $sql = "SELECT id, title, message, type, is_read, created_at 
-                    FROM notifications 
-                    WHERE user_id = ? AND user_type = ? 
-                    ORDER BY created_at DESC 
-                    LIMIT ?";
-            
-            $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([$userId, $userType, $limit]);
-            $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
-            return $this->sendPayload(
-                ['notifications' => $notifications],
-                "success",
-                "Notifications retrieved successfully",
-                200
-            );
-        } catch (\PDOException $e) {
-            return $this->sendPayload(
-                null,
-                "failed",
-                "Failed to retrieve notifications: " . $e->getMessage(),
-                500
-            );
-        }
-    }
+
 
     public function get_booking_details($bookingId) {
         try {

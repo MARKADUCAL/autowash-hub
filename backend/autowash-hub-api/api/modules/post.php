@@ -845,58 +845,7 @@ class Post extends GlobalMethods
         }
     }
 
-    public function add_promotion($data) {
-        // Validate required fields
-        if (empty($data->name) || !isset($data->discount_percentage) || empty($data->start_date) || empty($data->end_date)) {
-            return $this->sendPayload(null, "failed", "Missing required fields", 400);
-        }
 
-        try {
-            $sql = "INSERT INTO promotions (name, description, discount_percentage, start_date, end_date, is_active) 
-                    VALUES (?, ?, ?, ?, ?, ?)";
-            
-            $statement = $this->pdo->prepare($sql);
-            $isActive = isset($data->is_active) ? ($data->is_active ? 1 : 0) : 1;
-
-            $statement->execute([
-                $data->name,
-                $data->description ?? '',
-                $data->discount_percentage,
-                $data->start_date,
-                $data->end_date,
-                $isActive
-            ]);
-
-            if ($statement->rowCount() > 0) {
-                $promotionId = $this->pdo->lastInsertId();
-                
-                // Fetch the created promotion
-                $sql = "SELECT id, name, description, discount_percentage, start_date, end_date, is_active, created_at 
-                       FROM promotions WHERE id = ?";
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->execute([$promotionId]);
-                $promotion = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                return $this->sendPayload(
-                    ['promotion' => $promotion], 
-                    "success", 
-                    "Promotion added successfully", 
-                    200
-                );
-            } else {
-                return $this->sendPayload(null, "failed", "Failed to add promotion", 400);
-            }
-
-        } catch (\PDOException $e) {
-            error_log("Promotion creation error: " . $e->getMessage());
-            return $this->sendPayload(
-                null, 
-                "failed", 
-                "A database error occurred.", 
-                500
-            );
-        }
-    }
 
     public function add_service_category($data) {
         // Validate required fields
@@ -1057,106 +1006,9 @@ class Post extends GlobalMethods
         }
     }
 
-    public function add_notification($data) {
-        // Validate required fields
-        if (empty($data->user_id) || empty($data->user_type) || empty($data->title) || empty($data->message)) {
-            return $this->sendPayload(null, "failed", "Missing required fields", 400);
-        }
 
-        try {
-            $sql = "INSERT INTO notifications (user_id, user_type, title, message, type) 
-                    VALUES (?, ?, ?, ?, ?)";
-            
-            $statement = $this->pdo->prepare($sql);
-            $type = $data->type ?? 'info';
 
-            $statement->execute([
-                $data->user_id,
-                $data->user_type,
-                $data->title,
-                $data->message,
-                $type
-            ]);
 
-            if ($statement->rowCount() > 0) {
-                $notificationId = $this->pdo->lastInsertId();
-                
-                // Fetch the created notification
-                $sql = "SELECT id, user_id, user_type, title, message, type, is_read, created_at 
-                       FROM notifications WHERE id = ?";
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->execute([$notificationId]);
-                $notification = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                return $this->sendPayload(
-                    ['notification' => $notification], 
-                    "success", 
-                    "Notification added successfully", 
-                    200
-                );
-            } else {
-                return $this->sendPayload(null, "failed", "Failed to add notification", 400);
-            }
-
-        } catch (\PDOException $e) {
-            error_log("Notification creation error: " . $e->getMessage());
-            return $this->sendPayload(
-                null, 
-                "failed", 
-                "A database error occurred.", 
-                500
-            );
-        }
-    }
-
-    public function add_booking_promotion($data) {
-        // Validate required fields
-        if (empty($data->booking_id) || empty($data->promotion_id) || !isset($data->discount_amount)) {
-            return $this->sendPayload(null, "failed", "Missing required fields", 400);
-        }
-
-        try {
-            $sql = "INSERT INTO booking_promotions (booking_id, promotion_id, discount_amount) 
-                    VALUES (?, ?, ?)";
-            
-            $statement = $this->pdo->prepare($sql);
-
-            $statement->execute([
-                $data->booking_id,
-                $data->promotion_id,
-                $data->discount_amount
-            ]);
-
-            if ($statement->rowCount() > 0) {
-                $bookingPromotionId = $this->pdo->lastInsertId();
-                
-                // Fetch the created booking promotion
-                $sql = "SELECT id, booking_id, promotion_id, discount_amount, created_at 
-                       FROM booking_promotions WHERE id = ?";
-                $stmt = $this->pdo->prepare($sql);
-                $stmt->execute([$bookingPromotionId]);
-                $bookingPromotion = $stmt->fetch(PDO::FETCH_ASSOC);
-                
-                return $this->sendPayload(
-                    ['booking_promotion' => $bookingPromotion], 
-                    "success", 
-                    "Booking promotion added successfully", 
-                    200
-                );
-            } else {
-                return $this->sendPayload(null, "failed", "Failed to add booking promotion", 400);
-            }
-
-        } catch (\PDOException $e) {
-            error_log("Booking promotion creation error: " . $e->getMessage());
-            return $this->sendPayload(
-                null, 
-                "failed", 
-                "A database error occurred.", 
-                500
-            );
-        }
-    }
 
     public function add_booking_history($data) {
         // Validate required fields

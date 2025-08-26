@@ -359,38 +359,7 @@ class Put {
         }
     }
 
-    public function update_promotion($data) {
-        try {
-            if (!isset($data->id) || empty($data->id)) {
-                return $this->sendPayload(null, "failed", "Promotion ID is required", 400);
-            }
-            
-            $sql = "UPDATE promotions 
-                    SET name = ?, description = ?, discount_percentage = ?, start_date = ?, end_date = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP 
-                    WHERE id = ?";
-            
-            $stmt = $this->pdo->prepare($sql);
-            $isActive = isset($data->is_active) ? ($data->is_active ? 1 : 0) : 1;
-            
-            $stmt->execute([
-                $data->name,
-                $data->description ?? '',
-                $data->discount_percentage,
-                $data->start_date,
-                $data->end_date,
-                $isActive,
-                $data->id
-            ]);
-            
-            if ($stmt->rowCount() > 0) {
-                return $this->sendPayload(null, "success", "Promotion updated successfully", 200);
-            } else {
-                return $this->sendPayload(null, "failed", "Promotion not found or no changes made", 404);
-            }
-        } catch (Exception $e) {
-            return $this->sendPayload(null, "failed", $e->getMessage(), 500);
-        }
-    }
+
 
     public function update_service_category($data) {
         try {
@@ -453,33 +422,7 @@ class Put {
         }
     }
 
-    public function update_notification_status($data) {
-        try {
-            if (!isset($data->id) || empty($data->id)) {
-                return $this->sendPayload(null, "failed", "Notification ID is required", 400);
-            }
-            
-            $sql = "UPDATE notifications 
-                    SET is_read = ?, updated_at = CURRENT_TIMESTAMP 
-                    WHERE id = ?";
-            
-            $stmt = $this->pdo->prepare($sql);
-            $isRead = isset($data->is_read) ? ($data->is_read ? 1 : 0) : 0;
-            
-            $stmt->execute([
-                $isRead,
-                $data->id
-            ]);
-            
-            if ($stmt->rowCount() > 0) {
-                return $this->sendPayload(null, "success", "Notification status updated successfully", 200);
-            } else {
-                return $this->sendPayload(null, "failed", "Notification not found or no changes made", 404);
-            }
-        } catch (Exception $e) {
-            return $this->sendPayload(null, "failed", $e->getMessage(), 500);
-        }
-    }
+
 
     public function update_system_setting($data) {
         try {

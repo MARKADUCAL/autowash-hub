@@ -626,51 +626,6 @@ PUT /update_time_slot
 
 Updates an existing time slot.
 
-### Promotions
-
-#### GET Endpoints
-
-##### Get Promotions
-
-```
-GET /get_promotions
-```
-
-Returns all active promotions.
-
-#### POST Endpoints
-
-##### Add Promotion
-
-```
-POST /add_promotion
-```
-
-Creates a new promotion.
-
-**Request Body:**
-
-```json
-{
-  "name": "New Customer Discount",
-  "description": "20% off for first-time customers",
-  "discount_percentage": 20.0,
-  "start_date": "2025-01-01",
-  "end_date": "2025-12-31",
-  "is_active": true
-}
-```
-
-#### PUT Endpoints
-
-##### Update Promotion
-
-```
-PUT /update_promotion
-```
-
-Updates an existing promotion.
-
 ### Customer Feedback
 
 #### GET Endpoints
@@ -748,50 +703,6 @@ PUT /update_employee_schedule
 ```
 
 Updates an existing employee schedule.
-
-### Notifications
-
-#### GET Endpoints
-
-##### Get Notifications
-
-```
-GET /get_notifications?user_id=1&user_type=customer&limit=20
-```
-
-Returns notifications for a specific user.
-
-#### POST Endpoints
-
-##### Add Notification
-
-```
-POST /add_notification
-```
-
-Creates a new notification.
-
-**Request Body:**
-
-```json
-{
-  "user_id": 1,
-  "user_type": "customer",
-  "title": "Booking Confirmed",
-  "message": "Your booking for January 25th has been confirmed.",
-  "type": "success"
-}
-```
-
-#### PUT Endpoints
-
-##### Update Notification Status
-
-```
-PUT /update_notification_status
-```
-
-Marks a notification as read.
 
 ### System Settings
 
@@ -895,10 +806,8 @@ The API works with the following main tables:
 - `vehicle_types` - Vehicle categories
 - `payment_methods` - Payment options
 - `time_slots` - Available appointment times
-- `promotions` - Discount offers
 - `customer_feedback` - Customer reviews
 - `employee_schedules` - Work schedules
-- `notifications` - System notifications
 - `system_settings` - Configuration settings
 
 ## Testing
