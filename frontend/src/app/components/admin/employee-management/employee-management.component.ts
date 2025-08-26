@@ -204,23 +204,72 @@ export class EmployeeManagementComponent implements OnInit {
   }
 
   submitEditEmployeeForm(): void {
-    // Find the employee in the array and update it
-    const index = this.employees.findIndex(
-      (e) => e.id === this.editEmployeeData.id
-    );
-    if (index > -1) {
-      this.employees[index] = { ...this.editEmployeeData };
-      this.showNotification('Employee updated successfully');
-    }
-    this.closeEditEmployeeModal();
+    // Prepare payload for API
+    const [first_name, ...rest] = (this.editEmployeeData.name || '').split(' ');
+    const last_name = rest.join(' ').trim();
+
+    const payload: any = {
+      id: this.editEmployeeData.id,
+      first_name: first_name || this.editEmployeeData.name,
+      last_name: last_name || '',
+      phone: this.editEmployeeData.phone,
+      position: this.editEmployeeData.role,
+    };
+
+    this.http.put(`${this.apiUrl}/update_employee`, payload).subscribe({
+      next: (response: any) => {
+        if (
+          response &&
+          response.status &&
+          response.status.remarks === 'success'
+        ) {
+          // Update local list
+          const index = this.employees.findIndex(
+            (e) => e.id === this.editEmployeeData.id
+          );
+          if (index > -1) {
+            this.employees[index] = { ...this.editEmployeeData };
+          }
+          this.showNotification('Employee updated successfully');
+        } else {
+          this.showNotification(
+            response?.status?.message || 'Failed to update employee'
+          );
+        }
+        this.closeEditEmployeeModal();
+      },
+      error: (error) => {
+        console.error('Error updating employee:', error);
+        this.showNotification('Error updating employee. Please try again.');
+        this.closeEditEmployeeModal();
+      },
+    });
   }
 
   deleteEmployee(employee: Employee): void {
-    const index = this.employees.findIndex((e) => e.id === employee.id);
-    if (index > -1) {
-      this.employees.splice(index, 1);
-      this.showNotification('Employee deleted successfully');
-    }
+    this.http.delete(`${this.apiUrl}/employees/${employee.id}`).subscribe({
+      next: (response: any) => {
+        if (
+          response &&
+          response.status &&
+          response.status.remarks === 'success'
+        ) {
+          const index = this.employees.findIndex((e) => e.id === employee.id);
+          if (index > -1) {
+            this.employees.splice(index, 1);
+          }
+          this.showNotification('Employee deleted successfully');
+        } else {
+          this.showNotification(
+            response?.status?.message || 'Failed to delete employee'
+          );
+        }
+      },
+      error: (error) => {
+        console.error('Error deleting employee:', error);
+        this.showNotification('Error deleting employee. Please try again.');
+      },
+    });
   }
 
   viewEmployee(employee: Employee): void {

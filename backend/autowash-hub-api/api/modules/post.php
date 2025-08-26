@@ -1160,6 +1160,60 @@ class Post extends GlobalMethods
         }
     }
 
+    public function delete_employee($id) {
+        // Validate employee ID
+        if (!is_numeric($id) || $id <= 0) {
+            return $this->sendPayload(null, "failed", "Invalid employee ID", 400);
+        }
+
+        try {
+            // Check if the employee exists
+            $sql = "SELECT COUNT(*) FROM employees WHERE id = ?";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute([$id]);
+            $count = $statement->fetchColumn();
+
+            if ($count == 0) {
+                return $this->sendPayload(null, "failed", "Employee not found", 404);
+            }
+
+            // Check for related bookings assignments
+            $sql = "SELECT COUNT(*) FROM bookings WHERE assigned_employee_id = ?";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute([$id]);
+            $bookingAssignments = $statement->fetchColumn();
+
+            if ($bookingAssignments > 0) {
+                return $this->sendPayload(
+                    null,
+                    "failed",
+                    "Cannot delete employee assigned to bookings. Please reassign or archive instead.",
+                    400
+                );
+            }
+
+            // Delete the employee
+            $sql = "DELETE FROM employees WHERE id = ?";
+            $statement = $this->pdo->prepare($sql);
+            $statement->execute([$id]);
+
+            if ($statement->rowCount() > 0) {
+                return $this->sendPayload(null, "success", "Employee deleted successfully", 200);
+            } else {
+                return $this->sendPayload(null, "failed", "Failed to delete employee", 400);
+            }
+
+        } catch (\PDOException $e) {
+            error_log("Employee deletion error: " . $e->getMessage());
+            return $this->sendPayload(
+                null,
+                "failed",
+                "Database error occurred: " . $e->getMessage(),
+                500
+            );
+        }
+    }
+
     public function get_customer_id_sequence() {
         try {
             $sql = "SELECT id FROM customers ORDER BY id ASC";

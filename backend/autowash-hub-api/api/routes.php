@@ -354,6 +354,12 @@ if ($method === 'PUT') {
         echo json_encode($result);
         exit();
     }
+
+    if (strpos($request, 'update_employee') !== false) {
+        $result = $put->update_employee($data);
+        echo json_encode($result);
+        exit();
+    }
     
     if (strpos($request, 'services') !== false) {
         // Process the service update
@@ -441,6 +447,12 @@ if ($method === 'DELETE') {
     
     if (strpos($request, 'customers') !== false && is_numeric($id)) {
         $result = $post->delete_customer($id);
+        echo json_encode($result);
+        exit();
+    }
+    
+    if (strpos($request, 'employees') !== false && is_numeric($id)) {
+        $result = $post->delete_employee($id);
         echo json_encode($result);
         exit();
     }

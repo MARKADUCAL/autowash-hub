@@ -223,20 +223,71 @@ export class UserManagementComponent implements OnInit {
   }
 
   submitEditUserForm(): void {
-    const index = this.users.findIndex((u) => u.id === this.editUserData.id);
-    if (index > -1) {
-      this.users[index] = { ...this.editUserData };
-      this.showNotification('User updated successfully');
-    }
-    this.closeEditUserModal();
+    // Split full name into first and last name for API
+    const [first_name, ...rest] = (this.editUserData.name || '').split(' ');
+    const last_name = rest.join(' ').trim();
+
+    const payload: any = {
+      id: this.editUserData.id,
+      first_name: first_name || this.editUserData.name,
+      last_name: last_name || '',
+      email: this.editUserData.email,
+      phone: this.editUserData.phone,
+    };
+
+    this.http.put(`${this.apiUrl}/update_customer_profile`, payload).subscribe({
+      next: (response: any) => {
+        if (
+          response &&
+          response.status &&
+          response.status.remarks === 'success'
+        ) {
+          const index = this.users.findIndex(
+            (u) => u.id === this.editUserData.id
+          );
+          if (index > -1) {
+            this.users[index] = { ...this.editUserData };
+          }
+          this.showNotification('User updated successfully');
+        } else {
+          this.showNotification(
+            response?.status?.message || 'Failed to update user'
+          );
+        }
+        this.closeEditUserModal();
+      },
+      error: (error) => {
+        console.error('Error updating user:', error);
+        this.showNotification('Error updating user. Please try again.');
+        this.closeEditUserModal();
+      },
+    });
   }
 
   deleteUser(user: User): void {
-    const index = this.users.findIndex((u) => u.id === user.id);
-    if (index > -1) {
-      this.users.splice(index, 1);
-      this.showNotification('User deleted successfully');
-    }
+    this.http.delete(`${this.apiUrl}/customers/${user.id}`).subscribe({
+      next: (response: any) => {
+        if (
+          response &&
+          response.status &&
+          response.status.remarks === 'success'
+        ) {
+          const index = this.users.findIndex((u) => u.id === user.id);
+          if (index > -1) {
+            this.users.splice(index, 1);
+          }
+          this.showNotification('User deleted successfully');
+        } else {
+          this.showNotification(
+            response?.status?.message || 'Failed to delete user'
+          );
+        }
+      },
+      error: (error) => {
+        console.error('Error deleting user:', error);
+        this.showNotification('Error deleting user. Please try again.');
+      },
+    });
   }
 
   getUserInitials(name: string): string {

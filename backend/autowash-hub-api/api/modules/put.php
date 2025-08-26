@@ -7,6 +7,104 @@ class Put {
         $this->pdo = $pdo;
     }
 
+    public function update_customer_profile($data) {
+        try {
+            if (!isset($data->id) || empty($data->id)) {
+                return $this->sendPayload(null, "failed", "Customer ID is required", 400);
+            }
+
+            // Build dynamic update set
+            $fieldsMap = [
+                'first_name' => 'first_name',
+                'last_name' => 'last_name',
+                'email' => 'email',
+                'phone' => 'phone'
+            ];
+
+            $updates = [];
+            $values = [];
+
+            foreach ($fieldsMap as $inputKey => $column) {
+                if (isset($data->$inputKey)) {
+                    $updates[] = "$column = ?";
+                    $values[] = $data->$inputKey;
+                }
+            }
+
+            if (isset($data->password) && !empty($data->password)) {
+                $updates[] = "password = ?";
+                $values[] = password_hash($data->password, PASSWORD_DEFAULT);
+            }
+
+            if (empty($updates)) {
+                return $this->sendPayload(null, "failed", "No fields provided to update", 400);
+            }
+
+            $values[] = $data->id;
+
+            $sql = "UPDATE customers SET " . implode(", ", $updates) . " WHERE id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($values);
+
+            if ($stmt->rowCount() > 0) {
+                return $this->sendPayload(null, "success", "Customer updated successfully", 200);
+            }
+
+            return $this->sendPayload(null, "failed", "Customer not found or no changes made", 404);
+        } catch (Exception $e) {
+            return $this->sendPayload(null, "failed", $e->getMessage(), 500);
+        }
+    }
+
+    public function update_employee($data) {
+        try {
+            if (!isset($data->id) || empty($data->id)) {
+                return $this->sendPayload(null, "failed", "Employee ID is required", 400);
+            }
+
+            $fieldsMap = [
+                'first_name' => 'first_name',
+                'last_name' => 'last_name',
+                'email' => 'email',
+                'phone' => 'phone',
+                'position' => 'position'
+            ];
+
+            $updates = [];
+            $values = [];
+
+            foreach ($fieldsMap as $inputKey => $column) {
+                if (isset($data->$inputKey)) {
+                    $updates[] = "$column = ?";
+                    $values[] = $data->$inputKey;
+                }
+            }
+
+            if (isset($data->password) && !empty($data->password)) {
+                $updates[] = "password = ?";
+                $values[] = password_hash($data->password, PASSWORD_DEFAULT);
+            }
+
+            if (empty($updates)) {
+                return $this->sendPayload(null, "failed", "No fields provided to update", 400);
+            }
+
+            $values[] = $data->id;
+
+            $sql = "UPDATE employees SET " . implode(", ", $updates) . " WHERE id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($values);
+
+            if ($stmt->rowCount() > 0) {
+                return $this->sendPayload(null, "success", "Employee updated successfully", 200);
+            }
+
+            return $this->sendPayload(null, "failed", "Employee not found or no changes made", 404);
+        } catch (Exception $e) {
+            return $this->sendPayload(null, "failed", $e->getMessage(), 500);
+        }
+    }
+
     private function sendPayload($payload, $remarks, $message, $code) {
         $status = array(
             "remarks" => $remarks,
