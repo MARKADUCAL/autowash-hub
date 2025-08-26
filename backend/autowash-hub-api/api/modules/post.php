@@ -360,25 +360,36 @@ class Post extends GlobalMethods
                 return $this->sendPayload(null, "failed", "Email already registered", 400);
             }
             
-            // Check if employee_id already exists
+            // Compute the smallest available numeric id for employees
+            $nextId = $this->get_next_employee_id();
+
+            // Derive canonical formatted employee_id `EMP-XXX` using nextId
+            $formattedEmployeeId = sprintf('EMP-%03d', $nextId);
+
+            // If the provided employee_id does not match the computed one, prefer the computed one
+            // This keeps numeric id and string id in sync and fills gaps after deletions
+            $employeeIdToUse = $formattedEmployeeId;
+
+            // Ensure string employee_id uniqueness just in case
             $sql = "SELECT COUNT(*) FROM employees WHERE employee_id = ?";
             $statement = $this->pdo->prepare($sql);
-            $statement->execute([$data->employee_id]);
-            $count = $statement->fetchColumn();
-
-            if ($count > 0) {
-                return $this->sendPayload(null, "failed", "Employee ID already exists", 400);
+            $statement->execute([$employeeIdToUse]);
+            $existsEmployeeId = $statement->fetchColumn();
+            if ($existsEmployeeId > 0) {
+                // Extremely rare race: fall back to max+1 format if our candidate is taken
+                $employeeIdToUse = sprintf('EMP-%03d', $this->get_next_employee_id(true));
             }
-        
-            // Proceed with registration
-            $sql = "INSERT INTO employees (employee_id, first_name, last_name, email, phone, password, position) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)";
-            
+
+            // Proceed with registration (explicit id to keep sequence consistent)
+            $sql = "INSERT INTO employees (id, employee_id, first_name, last_name, email, phone, password, position) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+
             $statement = $this->pdo->prepare($sql);
             $hashedPassword = password_hash($data->password, PASSWORD_BCRYPT);
 
             $statement->execute([
-                $data->employee_id,
+                $nextId,
+                $employeeIdToUse,
                 $data->first_name,
                 $data->last_name ?? '',
                 $data->email,
@@ -401,6 +412,40 @@ class Post extends GlobalMethods
                 "Database error occurred. Please try again.", 
                 500
             );
+        }
+    }
+
+    /**
+     * Get the smallest available employee id starting from 1.
+     * If $forceNext is true, return the next number after the highest existing id.
+     */
+    private function get_next_employee_id($forceNext = false) {
+        try {
+            $sql = "SELECT id FROM employees ORDER BY id ASC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $existingIds = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+            if (empty($existingIds)) {
+                return 1;
+            }
+
+            if ($forceNext) {
+                return ((int)end($existingIds)) + 1;
+            }
+
+            $expected = 1;
+            foreach ($existingIds as $existingId) {
+                $existingId = (int)$existingId;
+                if ($existingId !== $expected) {
+                    return $expected;
+                }
+                $expected++;
+            }
+            return $expected; // no gaps
+        } catch (\PDOException $e) {
+            error_log("Error getting next employee ID: " . $e->getMessage());
+            return null; // fall back to auto-increment behavior if used elsewhere
         }
     }
 
