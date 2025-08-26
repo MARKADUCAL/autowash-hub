@@ -4,7 +4,7 @@
   "framework": "angular",
   "functions": {
     "dist/autowash-hub/server/server.mjs": {
-      "runtime": "nodejs18.x",
+      "runtime": "@vercel/node@3.0.0",
       "maxDuration": 30
     }
   },
