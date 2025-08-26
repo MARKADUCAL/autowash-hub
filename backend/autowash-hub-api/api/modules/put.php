@@ -31,9 +31,33 @@ class Put {
                 }
             }
 
-            if (isset($data->password) && !empty($data->password)) {
+            // Handle password change flow: require current_password and new_password, verify then update
+            $hasNewPassword = isset($data->new_password) && !empty($data->new_password);
+            $hasCurrentPassword = isset($data->current_password) && !empty($data->current_password);
+
+            if ($hasNewPassword) {
+                if (!$hasCurrentPassword) {
+                    return $this->sendPayload(null, "failed", "Current password is required to change password", 400);
+                }
+
+                // Fetch existing password hash
+                $sqlFetch = "SELECT password FROM customers WHERE id = ?";
+                $stmtFetch = $this->pdo->prepare($sqlFetch);
+                $stmtFetch->execute([$data->id]);
+                $existing = $stmtFetch->fetch(PDO::FETCH_ASSOC);
+
+                if (!$existing) {
+                    return $this->sendPayload(null, "failed", "Customer not found", 404);
+                }
+
+                $currentHash = $existing['password'] ?? '';
+                if (!password_verify($data->current_password, $currentHash)) {
+                    return $this->sendPayload(null, "failed", "Current password is incorrect", 401);
+                }
+
+                // Queue password update
                 $updates[] = "password = ?";
-                $values[] = password_hash($data->password, PASSWORD_DEFAULT);
+                $values[] = password_hash($data->new_password, PASSWORD_BCRYPT);
             }
 
             if (empty($updates)) {
@@ -47,10 +71,22 @@ class Put {
             $stmt->execute($values);
 
             if ($stmt->rowCount() > 0) {
-                return $this->sendPayload(null, "success", "Customer updated successfully", 200);
+                // Return updated customer (without password)
+                $stmtGet = $this->pdo->prepare("SELECT id, first_name, last_name, email, phone FROM customers WHERE id = ?");
+                $stmtGet->execute([$data->id]);
+                $customer = $stmtGet->fetch(PDO::FETCH_ASSOC);
+                return $this->sendPayload(['customer' => $customer], "success", "Customer updated successfully", 200);
             }
 
-            return $this->sendPayload(null, "failed", "Customer not found or no changes made", 404);
+            // Even if rowCount is 0, the record may exist but values were identical; treat as success and return current data
+            $stmtGet = $this->pdo->prepare("SELECT id, first_name, last_name, email, phone FROM customers WHERE id = ?");
+            $stmtGet->execute([$data->id]);
+            $customer = $stmtGet->fetch(PDO::FETCH_ASSOC);
+            if ($customer) {
+                return $this->sendPayload(['customer' => $customer], "success", "No changes made", 200);
+            }
+
+            return $this->sendPayload(null, "failed", "Customer not found", 404);
         } catch (Exception $e) {
             return $this->sendPayload(null, "failed", $e->getMessage(), 500);
         }

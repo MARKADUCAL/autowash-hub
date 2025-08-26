@@ -10,7 +10,6 @@ interface CustomerProfile {
   last_name: string;
   email: string;
   phone: string;
-  address?: string;
 }
 
 @Component({
@@ -30,7 +29,6 @@ export class ProfileComponent implements OnInit {
     last_name: '',
     email: '',
     phone: '',
-    address: '',
   };
 
   currentPassword: string = '';
@@ -135,7 +133,6 @@ export class ProfileComponent implements OnInit {
       last_name: this.profile.last_name,
       email: this.profile.email,
       phone: this.profile.phone,
-      address: this.profile.address,
       current_password: this.currentPassword,
       new_password: this.newPassword || null,
     };
