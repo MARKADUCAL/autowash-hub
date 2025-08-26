@@ -465,6 +465,60 @@ class Get extends GlobalMethods {
         }
     }
 
+    public function get_inventory() {
+        try {
+            // Ensure table exists to avoid 500s on fresh databases
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS inventory (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                image_url VARCHAR(1024) NULL,
+                stock INT NOT NULL DEFAULT 0,
+                price DECIMAL(10,2) NOT NULL DEFAULT 0,
+                category VARCHAR(255) NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+            // Ensure required columns exist on legacy tables
+            $requiredColumns = [
+                'image_url' => "ALTER TABLE inventory ADD COLUMN image_url VARCHAR(1024) NULL",
+                'stock' => "ALTER TABLE inventory ADD COLUMN stock INT NOT NULL DEFAULT 0",
+                'price' => "ALTER TABLE inventory ADD COLUMN price DECIMAL(10,2) NOT NULL DEFAULT 0",
+                'category' => "ALTER TABLE inventory ADD COLUMN category VARCHAR(255) NULL",
+            ];
+
+            foreach ($requiredColumns as $column => $alterSql) {
+                $checkSql = "SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'inventory' AND COLUMN_NAME = ?";
+                $checkStmt = $this->pdo->prepare($checkSql);
+                $checkStmt->execute([$column]);
+                $exists = (int)$checkStmt->fetchColumn() > 0;
+                if (!$exists) {
+                    try { $this->pdo->exec($alterSql); } catch (\PDOException $e) { /* ignore if race */ }
+                }
+            }
+
+            $sql = "SELECT id, name, image_url, stock, price, category FROM inventory ORDER BY id DESC";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return $this->sendPayload(
+                ['inventory' => $items],
+                "success",
+                "Inventory retrieved successfully",
+                200
+            );
+        } catch (\PDOException $e) {
+            // If something unexpected occurs, still return an empty list so UI can work
+            return $this->sendPayload(
+                ['inventory' => []],
+                "failed",
+                "Failed to retrieve inventory: " . $e->getMessage(),
+                200
+            );
+        }
+    }
+
     // New methods for the updated database schema
     public function get_vehicle_types() {
         try {

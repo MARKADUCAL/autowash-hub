@@ -7,12 +7,25 @@
     </button>
   </div>
 
+  <!-- Loading / Error -->
+  @if (loading) {
+  <div class="loading-container"><p>Loading inventory...</p></div>
+  } @if (error) {
+  <div class="error-container">
+    <p>{{ error }}</p>
+  </div>
+  }
+
   <div class="inventory-grid">
     @for (item of inventoryItems; track item.id) {
     <mat-card class="inventory-card">
       <div class="card-content">
         <div class="item-image">
-          <img [src]="item.imageUrl" [alt]="item.name" />
+          <img
+            [src]="item.imageUrl"
+            [alt]="item.name || 'Inventory image'"
+            title="{{ item.name }}"
+          />
         </div>
         <div class="item-details">
           <h3>{{ item.name }}</h3>
@@ -28,7 +41,7 @@
       </div>
 
       <div class="action-buttons">
-        <button class="action-btn view-btn" (click)="editItem(item)">
+        <button class="action-btn view-btn" (click)="viewItem(item)">
           View
         </button>
         <button class="action-btn edit-btn" (click)="editItem(item)">
@@ -37,8 +50,207 @@
         <button class="action-btn take-btn" (click)="takeItem(item)">
           Take
         </button>
+        <button class="action-btn delete-btn" (click)="deleteItem(item)">
+          Delete
+        </button>
       </div>
     </mat-card>
     }
+  </div>
+
+  <!-- Add Modal -->
+  <div class="modal" [class.show-modal]="isAddModalOpen">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Inventory Item</h2>
+        <span class="close-btn" (click)="closeAddModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form class="employee-form" (ngSubmit)="submitAddForm()">
+          <div class="form-group">
+            <label for="inv-name">Name *</label>
+            <input
+              id="inv-name"
+              type="text"
+              [(ngModel)]="newItem.name"
+              name="name"
+              placeholder="Item name"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="inv-stock">Stock *</label>
+            <input
+              id="inv-stock"
+              type="number"
+              [(ngModel)]="newItem.stock"
+              name="stock"
+              placeholder="0"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="inv-price">Price *</label>
+            <input
+              id="inv-price"
+              type="number"
+              step="0.01"
+              [(ngModel)]="newItem.price"
+              name="price"
+              placeholder="0.00"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="inv-category">Category</label>
+            <input
+              id="inv-category"
+              type="text"
+              [(ngModel)]="newItem.category"
+              name="category"
+              placeholder="e.g., Supplies"
+            />
+          </div>
+          <div class="form-group">
+            <label for="inv-image">Image URL</label>
+            <input
+              id="inv-image"
+              type="text"
+              [(ngModel)]="newItem.imageUrl"
+              name="imageUrl"
+              placeholder="https://..."
+            />
+          </div>
+          <div class="form-actions">
+            <button
+              type="button"
+              class="cancel-btn"
+              (click)="closeAddModal()"
+              [disabled]="isSubmitting"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="save-btn" [disabled]="isSubmitting">
+              {{ isSubmitting ? "Saving..." : "Save" }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal" [class.show-modal]="isEditModalOpen">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Edit Inventory Item</h2>
+        <span class="close-btn" (click)="closeEditModal()">&times;</span>
+      </div>
+      <div class="modal-body" *ngIf="editItemData">
+        <form class="employee-form" (ngSubmit)="submitEditForm()">
+          <div class="form-group">
+            <label for="edit-name">Name *</label>
+            <input
+              id="edit-name"
+              type="text"
+              [(ngModel)]="editItemData.name"
+              name="editName"
+              placeholder="Item name"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="edit-stock">Stock *</label>
+            <input
+              id="edit-stock"
+              type="number"
+              [(ngModel)]="editItemData.stock"
+              name="editStock"
+              placeholder="0"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="edit-price">Price *</label>
+            <input
+              id="edit-price"
+              type="number"
+              step="0.01"
+              [(ngModel)]="editItemData.price"
+              name="editPrice"
+              placeholder="0.00"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="edit-category">Category</label>
+            <input
+              id="edit-category"
+              type="text"
+              [(ngModel)]="editItemData.category"
+              name="editCategory"
+              placeholder="e.g., Supplies"
+            />
+          </div>
+          <div class="form-group">
+            <label for="edit-image">Image URL</label>
+            <input
+              id="edit-image"
+              type="text"
+              [(ngModel)]="editItemData.imageUrl"
+              name="editImageUrl"
+              placeholder="https://..."
+            />
+          </div>
+          <div class="form-actions">
+            <button type="button" class="cancel-btn" (click)="closeEditModal()">
+              Cancel
+            </button>
+            <button type="submit" class="save-btn">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Modal -->
+  <div class="modal" [class.show-modal]="isViewModalOpen">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Item Details</h2>
+        <span class="close-btn" (click)="closeViewModal()">&times;</span>
+      </div>
+      <div class="modal-body" *ngIf="selectedItem">
+        <div class="view-card">
+          <div class="view-image">
+            <img [src]="selectedItem.imageUrl" [alt]="selectedItem.name" />
+          </div>
+          <div class="view-fields">
+            <p><strong>Name:</strong> {{ selectedItem.name }}</p>
+            <p>
+              <strong>Category:</strong>
+              {{ selectedItem.category || "General" }}
+            </p>
+            <p><strong>Stock:</strong> {{ selectedItem.stock }}</p>
+            <p>
+              <strong>Price:</strong>
+              {{ selectedItem.price | currency : "PHP" }}
+            </p>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="cancel-btn" (click)="closeViewModal()">
+            Close
+          </button>
+          <button
+            type="button"
+            class="save-btn"
+            (click)="editItem(selectedItem)"
+          >
+            Edit
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

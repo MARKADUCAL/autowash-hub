@@ -897,6 +897,50 @@ class Post extends GlobalMethods
         }
     }
 
+    // Inventory CRUD
+    public function add_inventory_item($data) {
+        if (empty($data->name) || !isset($data->stock) || !isset($data->price)) {
+            return $this->sendPayload(null, "failed", "Missing required fields", 400);
+        }
+
+        try {
+            $sql = "INSERT INTO inventory (name, image_url, stock, price, category) VALUES (?, ?, ?, ?, ?)";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                $data->name,
+                $data->image_url ?? null,
+                $data->stock,
+                $data->price,
+                $data->category ?? null
+            ]);
+
+            if ($stmt->rowCount() > 0) {
+                $id = $this->pdo->lastInsertId();
+                return $this->sendPayload(['id' => $id], "success", "Inventory item added", 200);
+            }
+            return $this->sendPayload(null, "failed", "Failed to add item", 400);
+        } catch (\PDOException $e) {
+            return $this->sendPayload(null, "failed", "Database error: " . $e->getMessage(), 500);
+        }
+    }
+
+    public function delete_inventory_item($id) {
+        if (!is_numeric($id) || $id <= 0) {
+            return $this->sendPayload(null, "failed", "Invalid inventory ID", 400);
+        }
+        try {
+            $sql = "DELETE FROM inventory WHERE id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([$id]);
+            if ($stmt->rowCount() > 0) {
+                return $this->sendPayload(null, "success", "Inventory item deleted", 200);
+            }
+            return $this->sendPayload(null, "failed", "Item not found", 404);
+        } catch (\PDOException $e) {
+            return $this->sendPayload(null, "failed", "Database error: " . $e->getMessage(), 500);
+        }
+    }
+
     public function add_customer_feedback($data) {
         // Validate required fields
         if (empty($data->booking_id) || empty($data->customer_id) || !isset($data->rating)) {

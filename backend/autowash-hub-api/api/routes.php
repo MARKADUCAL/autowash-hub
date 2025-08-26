@@ -99,6 +99,13 @@ if ($method === 'GET') {
         exit();
     }
 
+    // Inventory routes
+    if (strpos($request, 'get_inventory') !== false) {
+        $result = $get->get_inventory();
+        echo json_encode($result);
+        exit();
+    }
+
     if (strpos($request, 'get_booking_count') !== false) {
         $result = $get->get_booking_count();
         echo json_encode($result);
@@ -325,6 +332,13 @@ if ($method === 'POST') {
         exit();
     }
 
+    // Inventory create
+    if (strpos($request, 'add_inventory_item') !== false) {
+        $result = $post->add_inventory_item($data);
+        echo json_encode($result);
+        exit();
+    }
+
 
 
     if (strpos($request, 'add_booking_history') !== false) {
@@ -424,6 +438,13 @@ if ($method === 'PUT') {
         exit();
     }
 
+    // Inventory update
+    if (strpos($request, 'update_inventory_item') !== false) {
+        $result = $put->update_inventory_item($data);
+        echo json_encode($result);
+        exit();
+    }
+
 
 
     if (strpos($request, 'update_system_setting') !== false) {
@@ -459,6 +480,13 @@ if ($method === 'DELETE') {
     
     if (strpos($request, 'bookings') !== false && is_numeric($id)) {
         $result = $post->delete_booking($id);
+        echo json_encode($result);
+        exit();
+    }
+
+    // Inventory delete
+    if (strpos($request, 'inventory') !== false && is_numeric($id)) {
+        $result = $post->delete_inventory_item($id);
         echo json_encode($result);
         exit();
     }
