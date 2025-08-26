@@ -1,0 +1,32 @@
+{
+  "buildCommand": "npm run build:ssr",
+  "outputDirectory": "dist/autowash-hub",
+  "framework": "angular",
+  "functions": {
+    "dist/autowash-hub/server/server.mjs": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/dist/autowash-hub/server/server.mjs"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}
