@@ -645,4 +645,38 @@ class Put {
             return $this->sendPayload(null, "failed", $e->getMessage(), 500);
         }
     }
+
+    public function update_inventory_request($data) {
+        try {
+            if (!isset($data->id) || empty($data->id)) {
+                return $this->sendPayload(null, "failed", "Request ID is required", 400);
+            }
+
+            $fields = [];
+            $values = [];
+            $map = [
+                'status' => 'status',
+                'notes' => 'notes'
+            ];
+            foreach ($map as $k => $col) {
+                if (isset($data->$k)) {
+                    $fields[] = "$col = ?";
+                    $values[] = $data->$k;
+                }
+            }
+            if (empty($fields)) {
+                return $this->sendPayload(null, "failed", "No fields provided to update", 400);
+            }
+            $values[] = $data->id;
+            $sql = "UPDATE inventory_requests SET " . implode(", ", $fields) . ", updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($values);
+            if ($stmt->rowCount() > 0) {
+                return $this->sendPayload(null, "success", "Inventory request updated", 200);
+            }
+            return $this->sendPayload(null, "failed", "Request not found or no changes", 404);
+        } catch (Exception $e) {
+            return $this->sendPayload(null, "failed", $e->getMessage(), 500);
+        }
+    }
 } 

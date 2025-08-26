@@ -1,10 +1,20 @@
 <div class="inventory-container">
   <div class="header">
     <h2>Inventory Management</h2>
-    <button mat-raised-button color="primary" (click)="addItem()">
-      <mat-icon>add</mat-icon>
-      Add Item
-    </button>
+    <div class="header-buttons">
+      <button mat-raised-button color="primary" (click)="addItem()">
+        <mat-icon>add</mat-icon>
+        Add Item
+      </button>
+      <button mat-raised-button color="accent" (click)="showHistory()">
+        <mat-icon>history</mat-icon>
+        History
+      </button>
+      <button mat-raised-button color="warn" (click)="showRequests()">
+        <mat-icon>list_alt</mat-icon>
+        Employee Requests
+      </button>
+    </div>
   </div>
 
   <!-- Loading / Error -->
@@ -223,7 +233,11 @@
       <div class="modal-body" *ngIf="selectedItem">
         <div class="view-card">
           <div class="view-image">
-            <img [src]="selectedItem.imageUrl" [alt]="selectedItem.name" />
+            <img
+              [src]="selectedItem.imageUrl"
+              [alt]="selectedItem.name"
+              title="{{ selectedItem.name }}"
+            />
           </div>
           <div class="view-fields">
             <p><strong>Name:</strong> {{ selectedItem.name }}</p>
@@ -250,6 +264,32 @@
             Edit
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div class="modal" [class.show-modal]="isHistoryModalOpen">
+    <div class="modal-content large-modal">
+      <div class="modal-header">
+        <h2>Inventory History</h2>
+        <span class="close-btn" (click)="closeHistoryModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <app-inventory-history></app-inventory-history>
+      </div>
+    </div>
+  </div>
+
+  <!-- Requests Modal -->
+  <div class="modal" [class.show-modal]="isRequestsModalOpen">
+    <div class="modal-content large-modal">
+      <div class="modal-header">
+        <h2>Employee Inventory Requests</h2>
+        <span class="close-btn" (click)="closeRequestsModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <app-inventory-requests></app-inventory-requests>
       </div>
     </div>
   </div>

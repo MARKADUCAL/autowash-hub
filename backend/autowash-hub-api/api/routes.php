@@ -106,6 +106,12 @@ if ($method === 'GET') {
         exit();
     }
 
+    if (strpos($request, 'get_inventory_requests') !== false) {
+        $result = $get->get_inventory_requests();
+        echo json_encode($result);
+        exit();
+    }
+
     if (strpos($request, 'get_booking_count') !== false) {
         $result = $get->get_booking_count();
         echo json_encode($result);
@@ -339,6 +345,13 @@ if ($method === 'POST') {
         exit();
     }
 
+    // Inventory request
+    if (strpos($request, 'add_inventory_request') !== false) {
+        $result = $post->add_inventory_request($data);
+        echo json_encode($result);
+        exit();
+    }
+
 
 
     if (strpos($request, 'add_booking_history') !== false) {
@@ -441,6 +454,13 @@ if ($method === 'PUT') {
     // Inventory update
     if (strpos($request, 'update_inventory_item') !== false) {
         $result = $put->update_inventory_item($data);
+        echo json_encode($result);
+        exit();
+    }
+
+    // Inventory request update
+    if (strpos($request, 'update_inventory_request') !== false) {
+        $result = $put->update_inventory_request($data);
         echo json_encode($result);
         exit();
     }

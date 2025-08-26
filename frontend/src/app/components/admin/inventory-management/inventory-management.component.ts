@@ -8,6 +8,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { environment } from '../../../../environments/environment';
 import { isPlatformBrowser } from '@angular/common';
+import { InventoryHistoryComponent } from '../inventory-history/inventory-history.component';
+import { InventoryRequestsComponent } from '../inventory-requests/inventory-requests.component';
 
 interface InventoryItem {
   id: number;
@@ -28,6 +30,8 @@ interface InventoryItem {
     MatButtonModule,
     MatIconModule,
     HttpClientModule,
+    InventoryHistoryComponent,
+    InventoryRequestsComponent,
   ],
   templateUrl: './inventory-management.component.html',
   styleUrl: './inventory-management.component.css',
@@ -39,6 +43,8 @@ export class InventoryManagementComponent implements OnInit {
   isAddModalOpen = false;
   isEditModalOpen = false;
   isViewModalOpen = false;
+  isHistoryModalOpen = false;
+  isRequestsModalOpen = false;
   newItem: Partial<InventoryItem> = {};
   editItemData: InventoryItem | null = null;
   selectedItem: InventoryItem | null = null;
@@ -162,6 +168,28 @@ export class InventoryManagementComponent implements OnInit {
 
   closeEditModal(): void {
     this.isEditModalOpen = false;
+    if (isPlatformBrowser(this.platformId)) document.body.style.overflow = '';
+  }
+
+  showHistory(): void {
+    this.isHistoryModalOpen = true;
+    if (isPlatformBrowser(this.platformId))
+      document.body.style.overflow = 'hidden';
+  }
+
+  closeHistoryModal(): void {
+    this.isHistoryModalOpen = false;
+    if (isPlatformBrowser(this.platformId)) document.body.style.overflow = '';
+  }
+
+  showRequests(): void {
+    this.isRequestsModalOpen = true;
+    if (isPlatformBrowser(this.platformId))
+      document.body.style.overflow = 'hidden';
+  }
+
+  closeRequestsModal(): void {
+    this.isRequestsModalOpen = false;
     if (isPlatformBrowser(this.platformId)) document.body.style.overflow = '';
   }
 

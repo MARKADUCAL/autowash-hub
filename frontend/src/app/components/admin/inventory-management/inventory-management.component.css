@@ -14,6 +14,27 @@
   color: #333;
 }
 
+.header-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.header-buttons button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.header-buttons button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
 .inventory-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -189,6 +210,12 @@
   transition: transform 0.3s ease;
 }
 
+.large-modal {
+  max-width: 90%;
+  width: 1200px;
+  max-height: 95vh;
+}
+
 .modal.show-modal .modal-content {
   transform: scale(1);
 }
@@ -341,6 +368,16 @@
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
+  }
+
+  .header-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .header-buttons button {
+    width: 100%;
+    justify-content: center;
   }
 
   .inventory-grid {

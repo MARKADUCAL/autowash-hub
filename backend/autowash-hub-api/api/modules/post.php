@@ -987,6 +987,78 @@ class Post extends GlobalMethods
         }
     }
 
+    public function add_inventory_request($data) {
+        if (empty($data->item_id) || empty($data->item_name) || !isset($data->quantity) || 
+            empty($data->employee_id) || empty($data->employee_name)) {
+            return $this->sendPayload(null, "failed", "Missing required fields", 400);
+        }
+
+        if ($data->quantity <= 0) {
+            return $this->sendPayload(null, "failed", "Quantity must be greater than 0", 400);
+        }
+
+        try {
+            // Ensure inventory_requests table exists
+            $this->pdo->exec("CREATE TABLE IF NOT EXISTS inventory_requests (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                item_id INT NOT NULL,
+                item_name VARCHAR(255) NOT NULL,
+                quantity INT NOT NULL,
+                employee_id VARCHAR(50) NOT NULL,
+                employee_name VARCHAR(255) NOT NULL,
+                status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+                request_date DATE NOT NULL,
+                notes TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;");
+
+            $sql = "INSERT INTO inventory_requests (item_id, item_name, quantity, employee_id, employee_name, status, request_date, notes) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute([
+                $data->item_id,
+                $data->item_name,
+                $data->quantity,
+                $data->employee_id,
+                $data->employee_name,
+                $data->status ?? 'pending',
+                $data->request_date ?? date('Y-m-d'),
+                $data->notes ?? null
+            ]);
+
+            if ($stmt->rowCount() > 0) {
+                $requestId = $this->pdo->lastInsertId();
+                
+                // Fetch the created request
+                $sql = "SELECT id, item_id, item_name, quantity, employee_id, employee_name, status, request_date, notes, created_at 
+                       FROM inventory_requests WHERE id = ?";
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute([$requestId]);
+                $request = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                return $this->sendPayload(
+                    ['inventory_request' => $request], 
+                    "success", 
+                    "Inventory request submitted successfully", 
+                    200
+                );
+            } else {
+                return $this->sendPayload(null, "failed", "Failed to submit inventory request", 400);
+            }
+
+        } catch (\PDOException $e) {
+            error_log("Inventory request creation error: " . $e->getMessage());
+            return $this->sendPayload(
+                null, 
+                "failed", 
+                "A database error occurred: " . $e->getMessage(), 
+                500
+            );
+        }
+    }
+
     public function add_customer_feedback($data) {
         // Validate required fields
         if (empty($data->booking_id) || empty($data->customer_id) || !isset($data->rating)) {
