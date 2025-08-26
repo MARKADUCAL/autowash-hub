@@ -30,6 +30,7 @@ interface CarWashBooking {
   serviceType?: string;
   price?: number;
   imageUrl?: string;
+  notes?: string;
 }
 
 @Component({
@@ -182,6 +183,7 @@ export class CarWashBookingComponent implements OnInit {
           serviceType: b.serviceName ?? 'Standard Wash',
           price: b.price ? Number(b.price) : undefined,
           imageUrl: 'assets/images/profile-placeholder.jpg',
+          notes: b.notes ?? undefined,
         }));
       },
       error: (err) => {
@@ -345,6 +347,32 @@ export class CarWashBookingComponent implements OnInit {
         </div>
       </div>
 
+      <div
+        class="notes-section"
+        *ngIf="
+          data.booking.status === 'Rejected' ||
+          data.booking.status === 'Completed' ||
+          data.booking.status === 'Pending' ||
+          data.booking.status === 'Approved'
+        "
+      >
+        <mat-divider></mat-divider>
+        <div class="notes" *ngIf="data.booking.notes">
+          <mat-icon>notes</mat-icon>
+          <div class="detail-text">
+            <div class="label">Notes</div>
+            <div class="value">{{ data.booking.notes }}</div>
+          </div>
+        </div>
+        <div class="notes empty" *ngIf="!data.booking.notes">
+          <mat-icon>help_outline</mat-icon>
+          <div class="detail-text">
+            <div class="label">Notes</div>
+            <div class="value">No notes provided</div>
+          </div>
+        </div>
+      </div>
+
       <div class="edit-section" *ngIf="data.mode === 'edit'">
         <mat-divider></mat-divider>
         <div class="form-row">
@@ -450,6 +478,28 @@ export class CarWashBookingComponent implements OnInit {
       .detail .value {
         font-size: 14px;
         font-weight: 500;
+      }
+
+      .notes-section {
+        margin-top: 8px;
+      }
+      .notes {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px 0;
+      }
+      .notes mat-icon {
+        color: #666;
+      }
+      .notes .label {
+        font-size: 12px;
+        color: #777;
+      }
+      .notes .value {
+        font-size: 14px;
+        font-weight: 500;
+        white-space: pre-wrap;
       }
 
       .form-row {

@@ -6,6 +6,7 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { BookingService } from '../../../services/booking.service';
 import { Booking, BookingStatus } from '../../../models/booking.model';
 import { Subscription } from 'rxjs';
@@ -13,7 +14,7 @@ import { Subscription } from 'rxjs';
 @Component({
   selector: 'app-tranaction-hitory',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './tranaction-hitory.component.html',
   styleUrl: './tranaction-hitory.component.css',
 })
@@ -32,6 +33,7 @@ export class TranactionHitoryComponent implements OnInit, OnDestroy {
   selectedBooking: Booking | null = null;
   bookingToCancel: Booking | null = null;
   isCancelling = false;
+  cancelReason: string = '';
 
   private isBrowser: boolean;
 
@@ -214,6 +216,7 @@ export class TranactionHitoryComponent implements OnInit, OnDestroy {
 
   openCancelModal(booking: Booking): void {
     this.bookingToCancel = booking;
+    this.cancelReason = '';
     this.isCancelModalOpen = true;
     if (isPlatformBrowser(this.platformId)) {
       document.body.style.overflow = 'hidden';
@@ -239,7 +242,13 @@ export class TranactionHitoryComponent implements OnInit, OnDestroy {
       console.log('📝 Current Status:', this.bookingToCancel.status);
 
       const result = await this.bookingService
-        .updateBookingStatus(this.bookingToCancel.id, 'Cancelled')
+        .updateBookingStatus(
+          this.bookingToCancel.id,
+          'Cancelled',
+          this.cancelReason && this.cancelReason.trim().length > 0
+            ? this.cancelReason.trim()
+            : undefined
+        )
         .toPromise();
 
       console.log('📡 Backend response:', result);

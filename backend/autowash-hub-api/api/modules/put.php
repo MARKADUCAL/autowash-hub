@@ -275,14 +275,39 @@ class Put {
             
             error_log("Booking exists, proceeding with update");
             
-            // Normalize status to lowercase for consistency
-            $normalizedStatus = strtolower($data->status);
+            // Normalize status to a canonical title-case used throughout the app
+            $rawStatus = isset($data->status) ? (string)$data->status : '';
+            if (trim($rawStatus) === '') {
+                // Safety: if client sent no status, default to Cancelled for this endpoint usage
+                $rawStatus = 'Cancelled';
+            }
+            $incomingStatus = strtolower(trim($rawStatus));
+            $map = [
+                'pending' => 'Pending',
+                'approved' => 'Approved',
+                'rejected' => 'Rejected',
+                'completed' => 'Completed',
+                'cancelled' => 'Cancelled',
+                'canceled' => 'Cancelled',
+                'confirm' => 'Approved',
+                'confirmed' => 'Approved'
+            ];
+            $normalizedStatus = $map[$incomingStatus] ?? 'Pending';
             error_log("Normalized status: " . $normalizedStatus);
             
-            // Simple update without transaction for now
-            $sql = "UPDATE bookings SET status = ? WHERE id = ?";
-            $stmt = $this->pdo->prepare($sql);
-            $result = $stmt->execute([$normalizedStatus, $bookingId]);
+            // If reason provided, append to notes politely; otherwise just update status
+            $hasReason = isset($data->reason) && trim((string)$data->reason) !== '';
+            if ($hasReason) {
+                $reasonText = trim((string)$data->reason);
+                $reasonNote = "Customer reason: " . $reasonText;
+                $sql = "UPDATE bookings SET status = ?, notes = CONCAT(COALESCE(notes, ''), CASE WHEN COALESCE(notes, '') = '' THEN '' ELSE ' | ' END, ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+                $stmt = $this->pdo->prepare($sql);
+                $result = $stmt->execute([$normalizedStatus, $reasonNote, $bookingId]);
+            } else {
+                $sql = "UPDATE bookings SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+                $stmt = $this->pdo->prepare($sql);
+                $result = $stmt->execute([$normalizedStatus, $bookingId]);
+            }
             
             if (!$result) {
                 throw new Exception("Failed to execute UPDATE query");

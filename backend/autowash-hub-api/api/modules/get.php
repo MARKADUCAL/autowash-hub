@@ -163,6 +163,7 @@ class Get extends GlobalMethods {
                         b.price,
                         b.vehicle_type as vehicleType,
                         b.payment_type as paymentType,
+                        b.notes,
                         b.nickname,
                         TRIM(CONCAT(COALESCE(c.first_name,''), ' ', COALESCE(c.last_name,''))) as customerName,
                         s.name as serviceName,

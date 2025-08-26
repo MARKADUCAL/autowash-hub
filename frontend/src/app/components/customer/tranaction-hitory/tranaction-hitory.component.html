@@ -522,6 +522,17 @@
           <span class="value">₱ {{ bookingToCancel.price }}</span>
         </div>
       </div>
+
+      <!-- Reason for cancellation -->
+      <div class="cancel-reason">
+        <h4>Reason for cancelling (optional)</h4>
+        <textarea
+          [(ngModel)]="cancelReason"
+          placeholder="E.g., Change of plans, not available at this time"
+          rows="3"
+          class="cancel-reason-textarea"
+        ></textarea>
+      </div>
     </div>
 
     <div class="modal-footer">

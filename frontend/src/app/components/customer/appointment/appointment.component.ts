@@ -382,11 +382,25 @@ export class AppointmentComponent implements OnInit {
   // Cancel a booking
   cancelBooking(booking: Booking): void {
     if (confirm(`Are you sure you want to cancel this booking?`)) {
-      this.bookingService.cancelBooking(booking.id).subscribe((success) => {
-        if (success) {
-          this.loadBookings(); // Refresh the bookings list
-        }
-      });
+      const reason = prompt(
+        'Please share a short reason for cancelling (optional):',
+        'Change of plans'
+      );
+
+      this.bookingService
+        .updateBookingStatus(booking.id, 'Cancelled', reason || undefined)
+        .subscribe({
+          next: (result) => {
+            if (result && result.success) {
+              this.loadBookings(); // Refresh the bookings list
+            } else {
+              this.errorMessage = 'Failed to cancel booking.';
+            }
+          },
+          error: () => {
+            this.errorMessage = 'Failed to cancel booking.';
+          },
+        });
     }
   }
 

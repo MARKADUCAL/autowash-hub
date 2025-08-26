@@ -495,8 +495,8 @@ class Post extends GlobalMethods
                 $paymentTypeString = $data->payment_type . ' - ' . $data->online_payment_option;
             }
             
-            $sql = "INSERT INTO bookings (id, customer_id, service_id, vehicle_type, nickname, phone, wash_date, wash_time, payment_type, price, notes) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            $sql = "INSERT INTO bookings (id, customer_id, service_id, vehicle_type, nickname, phone, wash_date, wash_time, payment_type, price, notes, status, created_at, updated_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
             
             $statement = $this->pdo->prepare($sql);
 
@@ -511,7 +511,8 @@ class Post extends GlobalMethods
                 $data->wash_time,
                 $paymentTypeString,
                 $data->price,
-                $data->notes ?? null
+                $data->notes ?? null,
+                'Pending'
             ]);
 
             if ($statement->rowCount() > 0) {

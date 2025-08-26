@@ -220,7 +220,8 @@ export class BookingService {
       | 'Approved'
       | 'Rejected'
       | 'Completed'
-      | 'Cancelled'
+      | 'Cancelled',
+    reason?: string
   ): Observable<any> {
     const normalized = this.normalizeStatus(status);
 
@@ -230,10 +231,14 @@ export class BookingService {
     console.log('🔄 Normalized Status:', normalized);
     console.log('🌐 API URL:', `${environment.apiUrl}/update_booking_status`);
 
-    const requestData = {
+    const requestData: any = {
       id: bookingId,
       status: normalized,
     };
+
+    if (reason && reason.trim().length > 0) {
+      requestData.reason = reason.trim();
+    }
 
     console.log('📤 Request data:', requestData);
 
