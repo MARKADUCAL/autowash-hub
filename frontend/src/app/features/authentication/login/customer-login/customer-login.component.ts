@@ -63,7 +63,11 @@ export class CustomerLoginComponent implements OnInit {
 
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
 
-    console.log('Attempting login with:', this.loginData);
+    // Avoid logging sensitive data like raw passwords
+    console.log('Attempting login with:', {
+      email: this.loginData.email,
+      password: '********',
+    });
 
     this.http
       .post(`${this.apiBaseUrl}/login_customer`, this.loginData, { headers })
