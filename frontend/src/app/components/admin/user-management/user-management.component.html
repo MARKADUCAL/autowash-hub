@@ -48,8 +48,8 @@
       <tbody>
         @for (user of users; track user.id) {
         <tr>
-          <td class="customer-id">{{ user.id }}</td>
-          <td class="customer-name">
+          <td class="customer-id" data-label="ID">{{ user.id }}</td>
+          <td class="customer-name" data-label="Name">
             <div class="name-cell">
               <div class="user-avatar-small">
                 {{ getUserInitials(user.name) }}
@@ -57,10 +57,12 @@
               <span>{{ user.name }}</span>
             </div>
           </td>
-          <td class="customer-email">{{ user.email }}</td>
-          <td class="customer-phone">{{ user.phone }}</td>
-          <td class="customer-date">{{ user.registrationDate }}</td>
-          <td class="customer-actions">
+          <td class="customer-email" data-label="Email">{{ user.email }}</td>
+          <td class="customer-phone" data-label="Phone">{{ user.phone }}</td>
+          <td class="customer-date" data-label="Registered">
+            {{ user.registrationDate }}
+          </td>
+          <td class="customer-actions" data-label="Actions">
             <div class="action-buttons">
               <button
                 class="action-btn view-btn"

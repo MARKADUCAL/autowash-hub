@@ -50,8 +50,10 @@
       <tbody>
         @for (employee of employees; track employee.id) {
         <tr>
-          <td class="employee-id">{{ employee.employeeId || "N/A" }}</td>
-          <td class="employee-name">
+          <td class="employee-id" data-label="ID">
+            {{ employee.employeeId || "N/A" }}
+          </td>
+          <td class="employee-name" data-label="Name">
             <div class="name-cell">
               <div class="user-avatar-small">
                 {{ getUserInitials(employee.name) }}
@@ -59,12 +61,16 @@
               <span>{{ employee.name }}</span>
             </div>
           </td>
-          <td class="employee-email">{{ employee.email }}</td>
-          <td class="employee-phone">{{ employee.phone }}</td>
-          <td class="employee-role">
+          <td class="employee-email" data-label="Email">
+            {{ employee.email }}
+          </td>
+          <td class="employee-phone" data-label="Phone">
+            {{ employee.phone }}
+          </td>
+          <td class="employee-role" data-label="Role">
             <span class="role-badge">{{ employee.role }}</span>
           </td>
-          <td class="employee-status">
+          <td class="employee-status" data-label="Status">
             <span
               class="status-badge"
               [ngClass]="employee.status.toLowerCase()"
@@ -72,8 +78,10 @@
               {{ employee.status }}
             </span>
           </td>
-          <td class="employee-date">{{ employee.registrationDate }}</td>
-          <td class="employee-actions">
+          <td class="employee-date" data-label="Registered">
+            {{ employee.registrationDate }}
+          </td>
+          <td class="employee-actions" data-label="Actions">
             <div class="action-buttons">
               <button
                 class="action-btn view-btn"
