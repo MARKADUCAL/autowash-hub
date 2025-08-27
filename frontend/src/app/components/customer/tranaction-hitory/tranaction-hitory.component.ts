@@ -8,6 +8,10 @@ import {
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BookingService } from '../../../services/booking.service';
+import {
+  FeedbackService,
+  CustomerFeedback,
+} from '../../../services/feedback.service';
 import { Booking, BookingStatus } from '../../../models/booking.model';
 import { Subscription } from 'rxjs';
 
@@ -35,11 +39,19 @@ export class TranactionHitoryComponent implements OnInit, OnDestroy {
   isCancelling = false;
   cancelReason: string = '';
 
+  // Feedback related properties
+  feedbackComment: string = '';
+  isSubmittingFeedback = false;
+  feedbackSuccessMessage: string | null = null;
+  feedbackErrorMessage: string | null = null;
+  feedbackExistsMap: Map<number, boolean> = new Map(); // Track which bookings have feedback
+
   private isBrowser: boolean;
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
-    private bookingService: BookingService
+    private bookingService: BookingService,
+    private feedbackService: FeedbackService
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
   }
@@ -147,6 +159,9 @@ export class TranactionHitoryComponent implements OnInit, OnDestroy {
                   this.bookings.length
                 );
 
+                // Check for existing feedback for each completed booking
+                this.checkExistingFeedback();
+
                 // Log each booking status for debugging
                 this.bookings.forEach((booking, index) => {
                   console.log(
@@ -198,8 +213,18 @@ export class TranactionHitoryComponent implements OnInit, OnDestroy {
     }
   }
 
-  openFeedbackModal(): void {
+  openFeedbackModal(booking?: Booking): void {
     console.log('Opening feedback modal');
+
+    // Prevent opening if feedback already exists
+    if (booking && this.hasFeedback(booking)) {
+      console.log('Feedback already exists for this booking');
+      return;
+    }
+
+    if (booking) {
+      this.selectedBooking = booking;
+    }
     this.isFeedbackModalOpen = true;
     if (isPlatformBrowser(this.platformId)) {
       document.body.style.overflow = 'hidden';
@@ -209,6 +234,11 @@ export class TranactionHitoryComponent implements OnInit, OnDestroy {
   closeFeedbackModal(): void {
     console.log('Closing feedback modal');
     this.isFeedbackModalOpen = false;
+    this.selectedBooking = null;
+    this.currentRating = 0;
+    this.feedbackComment = '';
+    this.feedbackSuccessMessage = null;
+    this.feedbackErrorMessage = null;
     if (isPlatformBrowser(this.platformId)) {
       document.body.style.overflow = '';
     }
@@ -299,6 +329,125 @@ export class TranactionHitoryComponent implements OnInit, OnDestroy {
 
   getRatingText(): string {
     return this.currentRating > 0 ? this.ratingTexts[this.currentRating] : '';
+  }
+
+  // Submit feedback for a completed booking
+  async submitFeedback(): Promise<void> {
+    if (!this.selectedBooking || this.currentRating === 0) {
+      this.feedbackErrorMessage =
+        'Please select a rating before submitting feedback.';
+      return;
+    }
+
+    // Check if booking is completed
+    if (this.normalizeStatus(this.selectedBooking.status) !== 'completed') {
+      this.feedbackErrorMessage =
+        'Feedback can only be submitted for completed bookings.';
+      return;
+    }
+
+    this.isSubmittingFeedback = true;
+    this.feedbackErrorMessage = null;
+    this.feedbackSuccessMessage = null;
+
+    try {
+      // Get customer data from localStorage
+      const customerData = localStorage.getItem('customer_data');
+      if (!customerData) {
+        throw new Error('Customer data not found. Please log in again.');
+      }
+
+      const customer = JSON.parse(customerData);
+      const customerId = customer.id;
+
+      if (!customerId) {
+        throw new Error('Customer ID not found. Please log in again.');
+      }
+
+      const feedbackData: CustomerFeedback = {
+        booking_id: parseInt(this.selectedBooking.id),
+        customer_id: customerId,
+        rating: this.currentRating,
+        comment: this.feedbackComment.trim() || '',
+        is_public: true,
+      };
+
+      console.log('🚀 Submitting feedback:', feedbackData);
+
+      const result = await this.feedbackService
+        .submitFeedback(feedbackData)
+        .toPromise();
+
+      if (result && result.success) {
+        console.log('✅ Feedback submitted successfully');
+        this.feedbackSuccessMessage =
+          result.message || 'Feedback submitted successfully!';
+
+        // Mark this booking as having feedback
+        if (this.selectedBooking) {
+          const bookingId = parseInt(this.selectedBooking.id);
+          this.feedbackExistsMap.set(bookingId, true);
+        }
+
+        // Close modal after a short delay
+        setTimeout(() => {
+          this.closeFeedbackModal();
+          // Reload bookings to refresh the data
+          this.loadBookings();
+        }, 2000);
+      } else {
+        throw new Error('Failed to submit feedback');
+      }
+    } catch (error) {
+      console.error('💥 Error submitting feedback:', error);
+      this.feedbackErrorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Failed to submit feedback. Please try again.';
+    } finally {
+      this.isSubmittingFeedback = false;
+    }
+  }
+
+  // Check if a booking can receive feedback (only completed bookings)
+  canSubmitFeedback(booking: Booking): boolean {
+    return this.normalizeStatus(booking.status) === 'completed';
+  }
+
+  // Check if a booking already has feedback
+  hasFeedback(booking: Booking): boolean {
+    const bookingId = parseInt(booking.id);
+    return this.feedbackExistsMap.get(bookingId) || false;
+  }
+
+  // Check for existing feedback for all completed bookings
+  private checkExistingFeedback(): void {
+    const completedBookings = this.bookings.filter(
+      (booking) => this.normalizeStatus(booking.status) === 'completed'
+    );
+
+    completedBookings.forEach((booking) => {
+      const bookingId = parseInt(booking.id);
+      this.feedbackService.checkFeedbackExists(bookingId).subscribe({
+        next: (exists) => {
+          this.feedbackExistsMap.set(bookingId, exists);
+          console.log(`Feedback exists for booking ${bookingId}: ${exists}`);
+        },
+        error: (error) => {
+          console.error(
+            `Error checking feedback for booking ${bookingId}:`,
+            error
+          );
+          this.feedbackExistsMap.set(bookingId, false);
+        },
+      });
+    });
+  }
+
+  // Clear feedback messages
+  clearFeedbackMessages(): void {
+    this.feedbackSuccessMessage = null;
+    this.feedbackErrorMessage = null;
   }
 
   // New methods for enhanced UI

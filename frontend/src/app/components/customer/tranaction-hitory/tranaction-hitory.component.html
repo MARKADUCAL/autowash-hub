@@ -153,6 +153,14 @@
       <div class="card-header">
         <div class="booking-id">
           <span class="id-label">{{ booking.serviceName }}</span>
+          <!-- Feedback indicator for completed bookings -->
+          <div
+            *ngIf="canSubmitFeedback(booking) && hasFeedback(booking)"
+            class="feedback-indicator"
+            title="Feedback submitted"
+          >
+            ✅ Feedback Submitted
+          </div>
         </div>
         <div
           class="status-badge"
@@ -248,10 +256,24 @@
           <span class="btn-icon">❌</span>
           Cancel Booking
         </button>
-        <button class="action-btn feedback-btn" (click)="openFeedbackModal()">
-          <span class="btn-icon">💬</span>
-          Feedback
+        <button
+          *ngIf="canSubmitFeedback(booking)"
+          class="action-btn feedback-btn"
+          (click)="openFeedbackModal(booking)"
+          [disabled]="hasFeedback(booking)"
+          [title]="
+            hasFeedback(booking)
+              ? 'You have already submitted feedback for this booking'
+              : 'Click to leave feedback for this completed service'
+          "
+        >
+          <span class="btn-icon">{{ hasFeedback(booking) ? "✅" : "💬" }}</span>
+          {{ hasFeedback(booking) ? "Feedback Submitted" : "Leave Feedback" }}
         </button>
+        <div *ngIf="!canSubmitFeedback(booking)" class="feedback-disabled">
+          <span class="feedback-icon">⏳</span>
+          <span class="feedback-text">Complete to leave feedback</span>
+        </div>
       </div>
     </div>
   </div>
@@ -448,10 +470,25 @@
         <label for="feedback-text">Tell us more about your experience:</label>
         <textarea
           id="feedback-text"
+          [(ngModel)]="feedbackComment"
           placeholder="Share your thoughts, suggestions, or any issues you encountered..."
           rows="4"
           class="feedback-textarea"
         ></textarea>
+      </div>
+
+      <!-- Feedback Messages -->
+      <div *ngIf="feedbackSuccessMessage" class="feedback-success">
+        <div class="success-icon">✅</div>
+        <p>{{ feedbackSuccessMessage }}</p>
+      </div>
+
+      <div *ngIf="feedbackErrorMessage" class="feedback-error">
+        <div class="error-icon">⚠️</div>
+        <p>{{ feedbackErrorMessage }}</p>
+        <button class="clear-btn" (click)="clearFeedbackMessages()">
+          Clear
+        </button>
       </div>
     </div>
 
@@ -461,10 +498,12 @@
       </button>
       <button
         class="modal-btn primary submit-btn"
-        [disabled]="currentRating === 0"
+        [disabled]="currentRating === 0 || isSubmittingFeedback"
+        (click)="submitFeedback()"
       >
-        <span class="btn-icon">📤</span>
-        Submit Feedback
+        <span class="btn-icon" *ngIf="!isSubmittingFeedback">📤</span>
+        <span class="btn-icon" *ngIf="isSubmittingFeedback">⏳</span>
+        {{ isSubmittingFeedback ? "Submitting..." : "Submit Feedback" }}
       </button>
     </div>
   </div>

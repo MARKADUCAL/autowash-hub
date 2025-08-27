@@ -45,7 +45,7 @@ interface RecentBooking {
 }
 
 interface RevenueData {
-  month: string;
+  date: string;
   revenue: number;
 }
 
@@ -334,7 +334,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           if (response?.status?.remarks === 'success') {
             const data = response.payload.revenue_data || [];
             this.revenueData = data.map((item: any) => ({
-              month: this.formatMonthLabel(item.month),
+              date: this.formatDateLabel(item.date),
               revenue: parseFloat(item.revenue) || 0,
             }));
           } else {
@@ -353,16 +353,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private generateMockRevenueData(): void {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-    this.revenueData = months.map((month) => ({
-      month,
-      revenue: Math.floor(Math.random() * 50000) + 10000,
-    }));
+    // Generate daily data for the last 7 days
+    const today = new Date();
+    this.revenueData = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      this.revenueData.push({
+        date: this.formatDateLabel(date.toISOString().split('T')[0]),
+        revenue: Math.floor(Math.random() * 2000) + 500, // Daily revenue between $500-$2500
+      });
+    }
   }
 
-  private formatMonthLabel(monthString: string): string {
-    const date = new Date(monthString + '-01');
-    return date.toLocaleDateString('en-US', { month: 'short' });
+  private formatDateLabel(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
   }
 
   private loadServiceDistribution(): Promise<void> {
@@ -415,7 +425,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.revenueChart.destroy();
       }
 
-      const revenueLabels = this.revenueData.map((item) => item.month);
+      const revenueLabels = this.revenueData.map((item) => item.date);
       const revenueValues = this.revenueData.map((item) => item.revenue);
 
       this.revenueChart = new Chart(revenueCtx, {
@@ -424,7 +434,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           labels: revenueLabels,
           datasets: [
             {
-              label: 'Monthly Revenue',
+              label: 'Daily Revenue',
               data: revenueValues,
               borderColor: '#1976d2',
               backgroundColor: 'rgba(25, 118, 210, 0.1)',
@@ -450,7 +460,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             },
             title: {
               display: true,
-              text: 'Revenue Trend',
+              text: 'Daily Revenue Trend',
               font: { size: 16, weight: 'bold' },
               padding: { top: 20, bottom: 20 },
             },
