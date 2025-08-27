@@ -178,7 +178,9 @@ export class InventoryManagementComponent implements OnInit {
   }
 
   showRequests(): void {
+    console.log('showRequests() called');
     this.isRequestsModalOpen = true;
+    console.log('isRequestsModalOpen set to:', this.isRequestsModalOpen);
     if (isPlatformBrowser(this.platformId))
       document.body.style.overflow = 'hidden';
   }

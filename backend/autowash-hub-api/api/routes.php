@@ -14,7 +14,25 @@ require_once "./modules/put.php";
 require_once "./config/database.php";
 
 // CORS headers
-header('Access-Control-Allow-Origin: http://localhost:4200');
+// Allow only known frontend origins (add your deployed domains below)
+$allowedOrigins = [
+    'http://localhost:4200',
+    'https://autowash-hub.vercel.app',
+    'https://markaducal.github.io',
+    // Add your GitHub Pages domain, e.g.:
+    // 'https://<your-username>.github.io',
+    // or custom domain serving the Angular app
+];
+
+$origin = isset($_SERVER['HTTP_ORIGIN']) ? $_SERVER['HTTP_ORIGIN'] : '';
+if (in_array($origin, $allowedOrigins, true)) {
+    header('Access-Control-Allow-Origin: ' . $origin);
+} else if ($origin === '') {
+    // Non-CORS request (same-origin or direct), do nothing
+} else {
+    // Optionally, you can echo a small JSON error for disallowed origins in debug
+}
+
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 header('Access-Control-Allow-Credentials: true');
@@ -100,14 +118,14 @@ if ($method === 'GET') {
     }
 
     // Inventory routes
-    if (strpos($request, 'get_inventory') !== false) {
-        $result = $get->get_inventory();
+    if (strpos($request, 'get_inventory_requests') !== false) {
+        $result = $get->get_inventory_requests();
         echo json_encode($result);
         exit();
     }
 
-    if (strpos($request, 'get_inventory_requests') !== false) {
-        $result = $get->get_inventory_requests();
+    if (strpos($request, 'get_inventory') !== false) {
+        $result = $get->get_inventory();
         echo json_encode($result);
         exit();
     }

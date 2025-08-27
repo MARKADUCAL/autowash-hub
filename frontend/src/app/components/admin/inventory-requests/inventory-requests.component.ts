@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   InventoryService,
@@ -14,6 +14,9 @@ import {
       <div class="requests-header">
         <h2>Inventory Requests</h2>
         <p class="subtitle">Manage employee inventory requests</p>
+        <p style="color: red; font-weight: bold;">
+          DEBUG: Component is rendered!
+        </p>
       </div>
 
       <!-- Loading state -->
@@ -309,7 +312,7 @@ import {
     `,
   ],
 })
-export class InventoryRequestsComponent implements OnInit {
+export class InventoryRequestsComponent implements OnInit, OnDestroy {
   requests: InventoryRequest[] = [];
   loading: boolean = true;
   error: string | null = null;
@@ -317,23 +320,34 @@ export class InventoryRequestsComponent implements OnInit {
   constructor(private inventoryService: InventoryService) {}
 
   ngOnInit() {
-    this.loadRequests();
+    console.log('InventoryRequestsComponent ngOnInit called');
+    // Add a small delay to ensure the component is fully rendered
+    setTimeout(() => {
+      this.loadRequests();
+    }, 100);
+  }
+
+  ngOnDestroy() {
+    console.log('InventoryRequestsComponent ngOnDestroy called');
   }
 
   loadRequests(): void {
     this.loading = true;
     this.error = null;
 
+    console.log('Loading inventory requests...');
     this.inventoryService.getInventoryRequests().subscribe({
       next: (requests) => {
+        console.log('Received requests:', requests);
         this.loading = false;
         this.requests = requests;
+        console.log('Updated requests array:', this.requests);
       },
       error: (err) => {
+        console.error('Error loading inventory requests:', err);
         this.loading = false;
         this.error =
           'Error loading inventory requests. Please try again later.';
-        console.error('Error loading inventory requests:', err);
       },
     });
   }

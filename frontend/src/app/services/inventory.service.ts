@@ -53,11 +53,19 @@ export class InventoryService {
 
   // Get all inventory requests
   getInventoryRequests(): Observable<InventoryRequest[]> {
+    console.log(
+      'Service: Making request to:',
+      `${this.apiUrl}/get_inventory_requests`
+    );
     return this.http.get<any>(`${this.apiUrl}/get_inventory_requests`).pipe(
       map((response) => {
+        console.log('Service: Raw response:', response);
         if (response?.status?.remarks === 'success') {
-          return response.payload?.inventory_requests || [];
+          const requests = response.payload?.inventory_requests || [];
+          console.log('Service: Extracted requests:', requests);
+          return requests;
         }
+        console.log('Service: No success status, returning empty array');
         return [];
       })
     );
