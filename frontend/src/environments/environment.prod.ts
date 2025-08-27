@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://your-backend-domain.com/api', // Update this with your actual backend URL
+  apiUrl: 'https://autowash-hub.vercel.app/api',
 };
