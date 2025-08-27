@@ -916,5 +916,44 @@ class Get extends GlobalMethods {
             );
         }
     }
+
+    /**
+     * Get all contact enquiries
+     */
+    public function get_contact_enquiries() {
+        try {
+            $sql = "SELECT 
+                        id,
+                        name,
+                        email,
+                        subject,
+                        message,
+                        created_at,
+                        status
+                    FROM 
+                        contact_messages 
+                    ORDER BY 
+                        created_at DESC";
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute();
+            $enquiries = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            return $this->sendPayload(
+                $enquiries,
+                "success",
+                "Contact enquiries retrieved successfully",
+                200
+            );
+        } catch (\PDOException $e) {
+            error_log("Error getting contact enquiries: " . $e->getMessage());
+            return $this->sendPayload(
+                null,
+                "failed",
+                "Failed to retrieve contact enquiries: " . $e->getMessage(),
+                500
+            );
+        }
+    }
 }
 ?>

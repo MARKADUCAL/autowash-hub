@@ -1,18 +1,5 @@
 <div class="dashboard-container">
   <!-- Header with refresh button -->
-  <div class="dashboard-header">
-    <h1>Admin Dashboard</h1>
-    <button
-      mat-raised-button
-      color="primary"
-      (click)="refreshDashboard()"
-      [disabled]="isLoading"
-      class="refresh-button"
-    >
-      <mat-icon>refresh</mat-icon>
-      Refresh
-    </button>
-  </div>
 
   <!-- Loading overlay -->
   <div class="loading-overlay" *ngIf="isLoading">

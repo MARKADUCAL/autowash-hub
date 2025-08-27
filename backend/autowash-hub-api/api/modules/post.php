@@ -2880,5 +2880,205 @@ class Post extends GlobalMethods
 
     }
 
+
+    /**
+     * Submit contact form
+     */
+    public function submit_contact($data) {
+        try {
+            // Validate required fields
+            if (!isset($data->name) || !isset($data->email) || !isset($data->subject) || !isset($data->message)) {
+                return $this->sendPayload(
+                    null,
+                    "failed",
+                    "All fields are required",
+                    400
+                );
+            }
+
+            // Validate email format
+            if (!filter_var($data->email, FILTER_VALIDATE_EMAIL)) {
+                return $this->sendPayload(
+                    null,
+                    "failed",
+                    "Invalid email format",
+                    400
+                );
+            }
+
+            // Validate Gmail domain
+            if (!preg_match('/@gmail\.com$/i', $data->email)) {
+                return $this->sendPayload(
+                    null,
+                    "failed",
+                    "Only Gmail addresses are allowed",
+                    400
+                );
+            }
+
+            // Sanitize inputs
+            $name = htmlspecialchars(trim($data->name));
+            $email = filter_var(trim($data->email), FILTER_SANITIZE_EMAIL);
+            $subject = htmlspecialchars(trim($data->subject));
+            $message = htmlspecialchars(trim($data->message));
+
+            // Insert into database (you'll need to create this table)
+            $sql = "INSERT INTO contact_messages (name, email, subject, message, created_at) 
+                    VALUES (?, ?, ?, ?, NOW())";
+            
+            $statement = $this->pdo->prepare($sql);
+            $result = $statement->execute([$name, $email, $subject, $message]);
+
+            if ($result) {
+                // Log the contact submission
+                error_log("Contact form submitted: $name ($email) - $subject");
+                
+                return $this->sendPayload(
+                    [
+                        'id' => $this->pdo->lastInsertId(),
+                        'name' => $name,
+                        'email' => $email,
+                        'subject' => $subject,
+                        'message' => $message,
+                        'created_at' => date('Y-m-d H:i:s')
+                    ],
+                    "success",
+                    "Contact message submitted successfully",
+                    200
+                );
+            } else {
+                return $this->sendPayload(
+                    null,
+                    "failed",
+                    "Failed to submit contact message",
+                    500
+                );
+            }
+
+        } catch (\PDOException $e) {
+            error_log("Contact form submission error: " . $e->getMessage());
+            return $this->sendPayload(
+                null,
+                "failed",
+                "Database error occurred: " . $e->getMessage(),
+                500
+            );
+        }
+    }
+
+    /**
+     * Update contact enquiry status
+     */
+    public function update_contact_status($data) {
+        try {
+            // Validate required fields
+            if (!isset($data->id) || !isset($data->status)) {
+                return $this->sendPayload(
+                    null,
+                    "failed",
+                    "ID and status are required",
+                    400
+                );
+            }
+
+            // Validate status
+            $validStatuses = ['new', 'read', 'replied', 'archived'];
+            if (!in_array($data->status, $validStatuses)) {
+                return $this->sendPayload(
+                    null,
+                    "failed",
+                    "Invalid status value",
+                    400
+                );
+            }
+
+            $id = (int)$data->id;
+            $status = $data->status;
+
+            // Update status in database
+            $sql = "UPDATE contact_messages SET status = ? WHERE id = ?";
+            $statement = $this->pdo->prepare($sql);
+            $result = $statement->execute([$status, $id]);
+
+            if ($result && $statement->rowCount() > 0) {
+                return $this->sendPayload(
+                    ['id' => $id, 'status' => $status],
+                    "success",
+                    "Contact status updated successfully",
+                    200
+                );
+            } else {
+                return $this->sendPayload(
+                    null,
+                    "failed",
+                    "Contact message not found or no changes made",
+                    404
+                );
+            }
+
+        } catch (\PDOException $e) {
+            error_log("Contact status update error: " . $e->getMessage());
+            return $this->sendPayload(
+                null,
+                "failed",
+                "Database error occurred: " . $e->getMessage(),
+                500
+            );
+        }
+    }
+
+    /**
+     * Delete contact enquiry
+     */
+    public function delete_contact_enquiry($id) {
+        try {
+            $id = (int)$id;
+
+            // Check if contact message exists
+            $checkSql = "SELECT id FROM contact_messages WHERE id = ?";
+            $checkStmt = $this->pdo->prepare($checkSql);
+            $checkStmt->execute([$id]);
+            
+            if (!$checkStmt->fetch()) {
+                return $this->sendPayload(
+                    null,
+                    "failed",
+                    "Contact message not found",
+                    404
+                );
+            }
+
+            // Delete the contact message
+            $sql = "DELETE FROM contact_messages WHERE id = ?";
+            $statement = $this->pdo->prepare($sql);
+            $result = $statement->execute([$id]);
+
+            if ($result && $statement->rowCount() > 0) {
+                return $this->sendPayload(
+                    ['id' => $id],
+                    "success",
+                    "Contact message deleted successfully",
+                    200
+                );
+            } else {
+                return $this->sendPayload(
+                    null,
+                    "failed",
+                    "Failed to delete contact message",
+                    500
+                );
+            }
+
+        } catch (\PDOException $e) {
+            error_log("Contact deletion error: " . $e->getMessage());
+            return $this->sendPayload(
+                null,
+                "failed",
+                "Database error occurred: " . $e->getMessage(),
+                500
+            );
+        }
+    }
+
 }
 

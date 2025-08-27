@@ -147,6 +147,12 @@ if ($method === 'GET') {
         exit();
     }
 
+    if (strpos($request, 'get_contact_enquiries') !== false) {
+        $result = $get->get_contact_enquiries();
+        echo json_encode($result);
+        exit();
+    }
+
     // New GET routes for updated database schema
     if (strpos($request, 'get_vehicle_types') !== false) {
         $result = $get->get_vehicle_types();
@@ -338,6 +344,18 @@ if ($method === 'POST') {
         exit();
     }
 
+    if (strpos($request, 'submit_contact') !== false) {
+        $result = $post->submit_contact($data);
+        echo json_encode($result);
+        exit();
+    }
+
+    if (strpos($request, 'update_contact_status') !== false) {
+        $result = $post->update_contact_status($data);
+        echo json_encode($result);
+        exit();
+    }
+
     // Inventory create
     if (strpos($request, 'add_inventory_item') !== false) {
         $result = $post->add_inventory_item($data);
@@ -514,6 +532,13 @@ if ($method === 'DELETE') {
     // Inventory delete
     if (strpos($request, 'inventory') !== false && is_numeric($id)) {
         $result = $post->delete_inventory_item($id);
+        echo json_encode($result);
+        exit();
+    }
+
+    // Contact enquiry delete
+    if (strpos($request, 'delete_contact_enquiry') !== false && is_numeric($id)) {
+        $result = $post->delete_contact_enquiry($id);
         echo json_encode($result);
         exit();
     }
