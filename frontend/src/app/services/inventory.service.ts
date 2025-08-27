@@ -9,7 +9,6 @@ export interface InventoryItem {
   name: string;
   stock: number;
   imageUrl: string;
-  price: number;
   category?: string;
   dateOfInput?: string;
 }
@@ -21,7 +20,7 @@ export interface InventoryRequest {
   quantity: number;
   employee_id: string;
   employee_name: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | 'completed';
   request_date: string;
   notes?: string;
 }
@@ -44,7 +43,6 @@ export class InventoryService {
             name: i.name,
             imageUrl: i.image_url || 'assets/logo.jpg',
             stock: Number(i.stock) || 0,
-            price: Number(i.price) || 0,
             category: i.category || 'General',
           }));
         }
@@ -88,6 +86,22 @@ export class InventoryService {
   // Update inventory request status (admin)
   updateInventoryRequest(request: Partial<InventoryRequest>): Observable<any> {
     return this.http.put(`${this.apiUrl}/update_inventory_request`, request);
+  }
+
+  // Take item for employee (admin)
+  takeItemForEmployee(
+    itemId: number,
+    quantity: number,
+    employeeId: string,
+    employeeName: string
+  ): Observable<any> {
+    const payload = {
+      item_id: itemId,
+      quantity: quantity,
+      employee_id: employeeId,
+      employee_name: employeeName,
+    };
+    return this.http.post(`${this.apiUrl}/take_inventory_item`, payload);
   }
 
   // Get stock status for display

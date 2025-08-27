@@ -37,9 +37,6 @@
           <p class="category" *ngIf="item.category">
             Category: {{ item.category }}
           </p>
-          <p class="price" *ngIf="item.price">
-            Price: ₱{{ item.price | number : "1.2-2" }}
-          </p>
         </div>
         <div class="item-actions">
           <button class="action-btn details" (click)="showDetails(item)">

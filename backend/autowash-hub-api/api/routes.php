@@ -352,6 +352,13 @@ if ($method === 'POST') {
         exit();
     }
 
+    // Take inventory item for employee
+    if (strpos($request, 'take_inventory_item') !== false) {
+        $result = $post->take_inventory_item($data);
+        echo json_encode($result);
+        exit();
+    }
+
 
 
     if (strpos($request, 'add_booking_history') !== false) {

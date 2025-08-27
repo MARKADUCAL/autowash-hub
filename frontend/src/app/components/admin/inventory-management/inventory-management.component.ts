@@ -10,13 +10,13 @@ import { environment } from '../../../../environments/environment';
 import { isPlatformBrowser } from '@angular/common';
 import { InventoryHistoryComponent } from '../inventory-history/inventory-history.component';
 import { InventoryRequestsComponent } from '../inventory-requests/inventory-requests.component';
+import { InventoryService } from '../../../services/inventory.service';
 
 interface InventoryItem {
   id: number;
   name: string;
   imageUrl: string;
   stock: number;
-  price: number;
   category?: string;
 }
 
@@ -45,6 +45,7 @@ export class InventoryManagementComponent implements OnInit {
   isViewModalOpen = false;
   isHistoryModalOpen = false;
   isRequestsModalOpen = false;
+  isTakeItemModalOpen = false;
   newItem: Partial<InventoryItem> = {};
   editItemData: InventoryItem | null = null;
   selectedItem: InventoryItem | null = null;
@@ -54,6 +55,7 @@ export class InventoryManagementComponent implements OnInit {
   constructor(
     private snackBar: MatSnackBar,
     private http: HttpClient,
+    private inventoryService: InventoryService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -74,7 +76,6 @@ export class InventoryManagementComponent implements OnInit {
               name: i.name,
               imageUrl: i.image_url || 'assets/logo.jpg',
               stock: Number(i.stock) || 0,
-              price: Number(i.price) || 0,
               category: i.category || 'General',
             })
           );
@@ -95,7 +96,6 @@ export class InventoryManagementComponent implements OnInit {
     this.newItem = {
       name: '',
       stock: 0,
-      price: 0,
       imageUrl: '',
       category: '',
     } as any;
@@ -110,12 +110,8 @@ export class InventoryManagementComponent implements OnInit {
   }
 
   submitAddForm(): void {
-    if (
-      !this.newItem.name ||
-      this.newItem.stock == null ||
-      this.newItem.price == null
-    ) {
-      this.showNotification('Please fill name, stock, and price');
+    if (!this.newItem.name || this.newItem.stock == null) {
+      this.showNotification('Please fill name and stock');
       return;
     }
     this.isSubmitting = true;
@@ -123,7 +119,6 @@ export class InventoryManagementComponent implements OnInit {
       name: this.newItem.name,
       image_url: this.newItem.imageUrl || null,
       stock: Number(this.newItem.stock) || 0,
-      price: Number(this.newItem.price) || 0,
       category: this.newItem.category || null,
     };
     this.http.post(`${this.apiUrl}/add_inventory_item`, payload).subscribe({
@@ -200,7 +195,6 @@ export class InventoryManagementComponent implements OnInit {
       name: this.editItemData.name,
       image_url: this.editItemData.imageUrl,
       stock: Number(this.editItemData.stock) || 0,
-      price: Number(this.editItemData.price) || 0,
       category: this.editItemData.category || null,
     };
     this.http.put(`${this.apiUrl}/update_inventory_item`, payload).subscribe({
@@ -240,12 +234,60 @@ export class InventoryManagementComponent implements OnInit {
   }
 
   takeItem(item: InventoryItem): void {
-    if (item.stock > 0) {
-      item.stock--;
-      this.showNotification('Item taken from inventory');
-    } else {
-      this.showNotification('No stock available');
+    // Show a modal to input employee details and quantity
+    this.selectedItem = item;
+    this.isTakeItemModalOpen = true;
+    if (isPlatformBrowser(this.platformId))
+      document.body.style.overflow = 'hidden';
+  }
+
+  closeTakeItemModal(): void {
+    this.isTakeItemModalOpen = false;
+    this.selectedItem = null;
+    if (isPlatformBrowser(this.platformId)) document.body.style.overflow = '';
+  }
+
+  submitTakeItemForm(
+    employeeId: string,
+    employeeName: string,
+    quantity: number
+  ): void {
+    if (!this.selectedItem) return;
+
+    if (quantity > this.selectedItem.stock) {
+      this.showNotification('Requested quantity exceeds available stock');
+      return;
     }
+
+    if (quantity <= 0) {
+      this.showNotification('Quantity must be greater than 0');
+      return;
+    }
+
+    // Call the service to take item for employee
+    this.inventoryService
+      .takeItemForEmployee(
+        this.selectedItem.id,
+        quantity,
+        employeeId,
+        employeeName
+      )
+      .subscribe({
+        next: (response: any) => {
+          if (response?.status?.remarks === 'success') {
+            this.showNotification(`Item taken for ${employeeName}`);
+            this.closeTakeItemModal();
+            this.loadInventory(); // Reload to update stock
+          } else {
+            this.showNotification(
+              response?.status?.message || 'Failed to take item'
+            );
+          }
+        },
+        error: (err) => {
+          this.showNotification('Error taking item for employee');
+        },
+      });
   }
 
   private showNotification(message: string): void {

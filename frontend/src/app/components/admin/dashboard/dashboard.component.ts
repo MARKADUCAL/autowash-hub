@@ -105,7 +105,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isLoading = true;
   isLoadingStats = true;
   isLoadingBookings = true;
-  isLoadingCharts = true;
 
   // Auto-refresh interval (5 minutes)
   private readonly REFRESH_INTERVAL = 5 * 60 * 1000;
@@ -407,8 +406,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.isLoadingCharts = true;
-
     // Revenue Chart
     const revenueCtx = document.getElementById(
       'revenueChart'
@@ -575,8 +572,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
         },
       });
     }
-
-    this.isLoadingCharts = false;
   }
 
   updateBookingStatus(bookingId: number, newStatus: string): void {

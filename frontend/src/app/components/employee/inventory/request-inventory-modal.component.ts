@@ -30,9 +30,6 @@ import {
               <p *ngIf="selectedItem.category">
                 Category: {{ selectedItem.category }}
               </p>
-              <p *ngIf="selectedItem.price">
-                Price: ₱{{ selectedItem.price | number : '1.2-2' }}
-              </p>
             </div>
           </div>
 

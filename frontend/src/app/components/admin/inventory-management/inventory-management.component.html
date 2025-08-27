@@ -43,10 +43,6 @@
           <p class="category">
             <mat-icon>category</mat-icon> {{ item.category || "General" }}
           </p>
-          <p class="price">
-            <mat-icon>attach_money</mat-icon>
-            {{ item.price | currency : "PHP" }}
-          </p>
         </div>
       </div>
 
@@ -99,18 +95,7 @@
               required
             />
           </div>
-          <div class="form-group">
-            <label for="inv-price">Price *</label>
-            <input
-              id="inv-price"
-              type="number"
-              step="0.01"
-              [(ngModel)]="newItem.price"
-              name="price"
-              placeholder="0.00"
-              required
-            />
-          </div>
+
           <div class="form-group">
             <label for="inv-category">Category</label>
             <input
@@ -180,18 +165,7 @@
               required
             />
           </div>
-          <div class="form-group">
-            <label for="edit-price">Price *</label>
-            <input
-              id="edit-price"
-              type="number"
-              step="0.01"
-              [(ngModel)]="editItemData.price"
-              name="editPrice"
-              placeholder="0.00"
-              required
-            />
-          </div>
+
           <div class="form-group">
             <label for="edit-category">Category</label>
             <input
@@ -246,10 +220,6 @@
               {{ selectedItem.category || "General" }}
             </p>
             <p><strong>Stock:</strong> {{ selectedItem.stock }}</p>
-            <p>
-              <strong>Price:</strong>
-              {{ selectedItem.price | currency : "PHP" }}
-            </p>
           </div>
         </div>
         <div class="form-actions">
@@ -290,6 +260,94 @@
       </div>
       <div class="modal-body">
         <app-inventory-requests></app-inventory-requests>
+      </div>
+    </div>
+  </div>
+
+  <!-- Take Item Modal -->
+  <div class="modal" [class.show-modal]="isTakeItemModalOpen">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Take Item for Employee</h2>
+        <span class="close-btn" (click)="closeTakeItemModal()">&times;</span>
+      </div>
+      <div class="modal-body" *ngIf="selectedItem">
+        <div class="item-info">
+          <div class="item-image">
+            <img
+              [src]="selectedItem.imageUrl"
+              [alt]="selectedItem.name"
+              [title]="selectedItem.name"
+            />
+          </div>
+          <div class="item-details">
+            <h3>{{ selectedItem.name }}</h3>
+            <p>Available Stock: {{ selectedItem.stock }}</p>
+            <p *ngIf="selectedItem.category">
+              Category: {{ selectedItem.category }}
+            </p>
+          </div>
+        </div>
+
+        <form
+          class="employee-form"
+          (ngSubmit)="
+            submitTakeItemForm(
+              employeeId.value,
+              employeeName.value,
+              +quantity.value
+            )
+          "
+        >
+          <div class="form-group">
+            <label for="employee-id">Employee ID *</label>
+            <input
+              id="employee-id"
+              type="text"
+              #employeeId
+              name="employeeId"
+              placeholder="Enter employee ID"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="employee-name">Employee Name *</label>
+            <input
+              id="employee-name"
+              type="text"
+              #employeeName
+              name="employeeName"
+              placeholder="Enter employee name"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label for="quantity">Quantity *</label>
+            <input
+              id="quantity"
+              type="number"
+              #quantity
+              name="quantity"
+              placeholder="Enter quantity"
+              [max]="selectedItem.stock"
+              min="1"
+              required
+            />
+            <small class="form-text"
+              >Maximum available: {{ selectedItem.stock }}</small
+            >
+          </div>
+          <div class="form-actions">
+            <button
+              type="button"
+              class="cancel-btn"
+              (click)="closeTakeItemModal()"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="save-btn">Take Item</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

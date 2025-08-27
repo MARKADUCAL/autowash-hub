@@ -70,6 +70,11 @@ export class InventoryComponent implements OnInit {
     this.showRequestModal = false;
     this.selectedItem = null;
 
+    // Show success message
+    alert(
+      'Inventory request submitted successfully! Please wait for admin approval.'
+    );
+
     // Optionally reload inventory to show updated stock
     // this.loadInventory();
   }

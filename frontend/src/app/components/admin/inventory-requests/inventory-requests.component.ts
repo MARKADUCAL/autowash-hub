@@ -61,6 +61,14 @@ import {
               Reject
             </button>
           </div>
+          <div class="request-actions" *ngIf="request.status === 'approved'">
+            <button
+              class="action-btn take"
+              (click)="takeItemForEmployee(request)"
+            >
+              Take Item
+            </button>
+          </div>
         </div>
       </div>
 
@@ -200,6 +208,11 @@ import {
         color: #721c24;
       }
 
+      .status-completed {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+
       .request-details {
         margin-bottom: 15px;
       }
@@ -245,6 +258,15 @@ import {
 
       .action-btn.reject:hover {
         background-color: #c82333;
+      }
+
+      .action-btn.take {
+        background-color: #17a2b8;
+        color: white;
+      }
+
+      .action-btn.take:hover {
+        background-color: #138496;
       }
 
       .empty-state {
@@ -324,9 +346,37 @@ export class InventoryRequestsComponent implements OnInit {
     this.updateRequestStatus(request, 'rejected');
   }
 
+  takeItemForEmployee(request: InventoryRequest): void {
+    // Call the service to take item for employee
+    this.inventoryService
+      .takeItemForEmployee(
+        request.item_id,
+        request.quantity,
+        request.employee_id,
+        request.employee_name
+      )
+      .subscribe({
+        next: (response: any) => {
+          if (response?.status?.remarks === 'success') {
+            // Update request status to completed
+            this.updateRequestStatus(request, 'completed');
+            alert(`Item taken successfully for ${request.employee_name}`);
+          } else {
+            alert(
+              response?.status?.message || 'Failed to take item for employee'
+            );
+          }
+        },
+        error: (err) => {
+          console.error('Error taking item for employee:', err);
+          alert('Error taking item for employee. Please try again.');
+        },
+      });
+  }
+
   private updateRequestStatus(
     request: InventoryRequest,
-    status: 'approved' | 'rejected'
+    status: 'approved' | 'rejected' | 'completed'
   ): void {
     const updateData = {
       id: request.id,
