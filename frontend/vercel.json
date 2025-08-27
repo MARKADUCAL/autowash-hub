@@ -4,22 +4,15 @@
   "framework": "angular",
   "rewrites": [
     {
-      "source": "/favicon.ico",
-      "destination": "/dist/autowash-hub/browser/favicon.ico"
-    },
-    {
-      "source": "/assets/(.*)",
-      "destination": "/dist/autowash-hub/browser/assets/$1"
-    },
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
-    },
-    {
       "source": "/(.*)",
       "destination": "/dist/autowash-hub/browser/index.html"
     }
   ],
+  "functions": {
+    "dist/autowash-hub/server/server.mjs": {
+      "maxDuration": 30
+    }
+  },
   "headers": [
     {
       "source": "/assets/(.*)",
