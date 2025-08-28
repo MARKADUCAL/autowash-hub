@@ -165,16 +165,27 @@ class Get extends GlobalMethods {
                         b.payment_type as paymentType,
                         b.notes,
                         b.nickname,
+                        b.assigned_employee_id,
+                        b.created_at as dateCreated,
                         TRIM(CONCAT(COALESCE(c.first_name,''), ' ', COALESCE(c.last_name,''))) as customerName,
+                        c.first_name as firstName,
+                        c.last_name as lastName,
+                        c.phone,
                         s.name as serviceName,
                         s.description as serviceDescription,
-                        s.duration_minutes as serviceDuration
+                        s.duration_minutes as serviceDuration,
+                        e.first_name as employee_first_name,
+                        e.last_name as employee_last_name,
+                        e.position as employee_position,
+                        TRIM(CONCAT(COALESCE(e.first_name,''), ' ', COALESCE(e.last_name,''))) as assigned_employee_name
                     FROM 
                         bookings b
                     LEFT JOIN 
                         services s ON b.service_id = s.id
                     LEFT JOIN 
                         customers c ON b.customer_id = c.id
+                    LEFT JOIN 
+                        employees e ON b.assigned_employee_id = e.id
                     ORDER BY 
                         b.wash_date DESC, b.wash_time DESC";
 

@@ -103,8 +103,23 @@ export class CarWashBookingComponent implements OnInit {
     this.openBookingDialog(booking, 'view');
   }
 
-  editBooking(booking: CarWashBooking): void {
-    this.openBookingDialog(booking, 'edit');
+  markAsDone(booking: CarWashBooking): void {
+    const prev = booking.status;
+    booking.status = 'Completed';
+    this.bookingService.updateBookingStatus(booking.id, 'Completed').subscribe({
+      next: () => {
+        this.showNotification(
+          'Car wash completed successfully! Admin has been notified.'
+        );
+        this.loadBookings(); // Refresh the list to show updated status
+      },
+      error: (err) => {
+        booking.status = prev;
+        this.showNotification(
+          err.message || 'Failed to mark booking as completed'
+        );
+      },
+    });
   }
 
   filterBookings(status: string): CarWashBooking[] {
@@ -130,6 +145,28 @@ export class CarWashBookingComponent implements OnInit {
       .join('')
       .toUpperCase()
       .slice(0, 2);
+  }
+
+  private normalizeStatus(
+    status: string
+  ): 'Pending' | 'Approved' | 'Rejected' | 'Completed' {
+    const normalized = status?.toLowerCase().trim();
+
+    switch (normalized) {
+      case 'approved':
+      case 'approve':
+        return 'Approved';
+      case 'completed':
+      case 'complete':
+      case 'done':
+        return 'Completed';
+      case 'rejected':
+      case 'reject':
+        return 'Rejected';
+      case 'pending':
+      default:
+        return 'Pending';
+    }
   }
 
   completeBooking(booking: CarWashBooking): void {
@@ -163,21 +200,30 @@ export class CarWashBookingComponent implements OnInit {
       // Load bookings assigned to this employee
       this.bookingService.getBookingsByEmployee(employeeId).subscribe({
         next: (bookings) => {
-          this.bookings = bookings.map((b: any, idx: number) => ({
-            id: Number(b.id ?? idx + 1),
-            customerName: this.resolveCustomerName(b.customerName, b.nickname),
-            vehicleType: b.vehicleType ?? 'Unknown',
-            date: b.washDate ?? '',
-            time: b.washTime ?? '',
-            status: (b.status ?? 'Pending') as
-              | 'Pending'
-              | 'Approved'
-              | 'Rejected'
-              | 'Completed',
-            serviceType: b.serviceName ?? 'Standard Wash',
-            price: b.price ? Number(b.price) : undefined,
-            imageUrl: 'assets/images/profile-placeholder.jpg',
-          }));
+          this.bookings = bookings.map((b: any, idx: number) => {
+            // Debug: Log the raw status from database
+            console.log('Raw status from DB:', b.status);
+
+            const normalizedStatus = this.normalizeStatus(
+              b.status ?? 'Pending'
+            );
+            console.log('Normalized status:', normalizedStatus);
+
+            return {
+              id: Number(b.id ?? idx + 1),
+              customerName: this.resolveCustomerName(
+                b.customerName,
+                b.nickname
+              ),
+              vehicleType: b.vehicleType ?? 'Unknown',
+              date: b.washDate ?? '',
+              time: b.washTime ?? '',
+              status: normalizedStatus,
+              serviceType: b.serviceName ?? 'Standard Wash',
+              price: b.price ? Number(b.price) : undefined,
+              imageUrl: 'assets/images/profile-placeholder.jpg',
+            };
+          });
           this.loading = false;
         },
         error: (err) => {
@@ -200,33 +246,18 @@ export class CarWashBookingComponent implements OnInit {
     return nick.length > 0 ? nick : 'Customer';
   }
 
-  private openBookingDialog(booking: CarWashBooking, mode: 'view' | 'edit') {
+  private openBookingDialog(booking: CarWashBooking, mode: 'view') {
     const dialogRef = this.dialog.open(BookingDetailsDialogComponent, {
       width: '600px',
       maxWidth: '90vw',
       data: { booking: { ...booking }, mode },
     });
 
-    dialogRef
-      .afterClosed()
-      .subscribe(
-        (result?: { id: number; status: CarWashBooking['status'] }) => {
-          if (!result) return;
-          const { id, status } = result;
-          const index = this.bookings.findIndex((b) => b.id === id);
-          if (index === -1) return;
-
-          const prev = this.bookings[index].status;
-          this.bookings[index].status = status;
-          this.bookingService.updateBookingStatus(id, status).subscribe({
-            next: () => this.showNotification('Booking updated'),
-            error: (err) => {
-              this.bookings[index].status = prev;
-              this.showNotification(err.message || 'Failed to update booking');
-            },
-          });
-        }
-      );
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result && result.markAsDone) {
+        this.markAsDone(booking);
+      }
+    });
   }
 }
 
@@ -247,11 +278,13 @@ export class CarWashBookingComponent implements OnInit {
       <div class="modal-header">
         <div class="header-content">
           <div class="header-icon">
-            <mat-icon>{{ data.mode === 'view' ? 'visibility' : 'edit' }}</mat-icon>
+            <mat-icon>visibility</mat-icon>
           </div>
           <div class="header-text">
-            <h2 class="modal-title">{{ data.mode === 'view' ? 'View Booking Details' : 'Edit Booking' }}</h2>
-            <p class="modal-subtitle">{{ data.mode === 'view' ? 'Review the complete booking information' : 'Update booking status and details' }}</p>
+            <h2 class="modal-title">Car Wash Booking Details</h2>
+            <p class="modal-subtitle">
+              Review the complete booking information
+            </p>
           </div>
         </div>
         <button class="close-button" (click)="onClose()">
@@ -288,11 +321,15 @@ export class CarWashBookingComponent implements OnInit {
           <div class="info-grid">
             <div class="info-item">
               <span class="label">Service Type</span>
-              <span class="value">{{ data.booking.serviceType || 'Standard Wash' }}</span>
+              <span class="value">{{
+                data.booking.serviceType || 'Standard Wash'
+              }}</span>
             </div>
             <div class="info-item">
               <span class="label">Price</span>
-              <span class="value price">{{ data.booking.price | currency }}</span>
+              <span class="value price">{{
+                data.booking.price | currency
+              }}</span>
             </div>
           </div>
         </div>
@@ -322,21 +359,16 @@ export class CarWashBookingComponent implements OnInit {
             <h3>Status</h3>
           </div>
           <div class="info-grid">
-            <div class="info-item" *ngIf="data.mode === 'view'">
+            <div class="info-item">
               <span class="label">Current Status</span>
-              <span class="status-chip status-{{ data.booking.status.toLowerCase() }}">
+              <span
+                class="status-chip status-{{
+                  data.booking.status.toLowerCase()
+                }}"
+              >
                 <span class="status-dot"></span>
                 {{ data.booking.status }}
               </span>
-            </div>
-            <div class="info-item" *ngIf="data.mode === 'edit'">
-              <span class="label">Update Status</span>
-              <mat-select [(ngModel)]="editableStatus" class="status-select">
-                <mat-option value="Pending">Pending</mat-option>
-                <mat-option value="Approved">Approved</mat-option>
-                <mat-option value="Rejected">Rejected</mat-option>
-                <mat-option value="Completed">Completed</mat-option>
-              </mat-select>
             </div>
           </div>
         </div>
@@ -348,13 +380,13 @@ export class CarWashBookingComponent implements OnInit {
           <mat-icon>close</mat-icon>
           Close
         </button>
-        <button 
-          class="action-btn primary-btn" 
-          *ngIf="data.mode === 'edit'"
-          (click)="onSave()"
+        <button
+          class="action-btn primary-btn"
+          *ngIf="data.booking.status === 'Approved'"
+          (click)="onMarkAsDone()"
         >
-          <mat-icon>save</mat-icon>
-          Save Changes
+          <mat-icon>done_all</mat-icon>
+          Mark as Done
         </button>
       </div>
     </div>
@@ -546,10 +578,6 @@ export class CarWashBookingComponent implements OnInit {
         border: 1px solid #ddd6fe;
       }
 
-      .status-select {
-        min-width: 120px;
-      }
-
       .modal-actions {
         padding: 20px 24px;
         background: #f8fafc;
@@ -589,12 +617,12 @@ export class CarWashBookingComponent implements OnInit {
       }
 
       .primary-btn {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
         color: white;
       }
 
       .primary-btn:hover {
-        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+        background: linear-gradient(135deg, #047857 0%, #065f46 100%);
       }
 
       /* Responsive Design */
@@ -631,24 +659,17 @@ export class CarWashBookingComponent implements OnInit {
   ],
 })
 export class BookingDetailsDialogComponent {
-  editableStatus: 'Pending' | 'Approved' | 'Rejected' | 'Completed';
-
   constructor(
     public dialogRef: MatDialogRef<BookingDetailsDialogComponent>,
     @Inject(MAT_DIALOG_DATA)
-    public data: { booking: CarWashBooking; mode: 'view' | 'edit' }
-  ) {
-    this.editableStatus = data.booking.status;
-  }
+    public data: { booking: CarWashBooking; mode: 'view' }
+  ) {}
 
   onClose(): void {
     this.dialogRef.close();
   }
 
-  onSave(): void {
-    this.dialogRef.close({
-      id: this.data.booking.id,
-      status: this.editableStatus,
-    });
+  onMarkAsDone(): void {
+    this.dialogRef.close({ markAsDone: true });
   }
 }

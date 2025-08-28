@@ -1,7 +1,10 @@
 <div class="bookings-container">
   <div class="header">
     <div class="header-left">
-      <h2>My Assigned Bookings</h2>
+      <h2>My Assigned Car Wash Bookings</h2>
+      <p class="header-subtitle">
+        View and complete your assigned car wash bookings
+      </p>
     </div>
     <div class="header-right">
       <button mat-raised-button color="accent" (click)="refreshBookings()">
@@ -43,7 +46,8 @@
         <mat-icon class="no-bookings-icon">assignment</mat-icon>
         <h3>No Assigned Bookings</h3>
         <p>
-          You don't have any bookings assigned to you yet. Check back later!
+          You don't have any car wash bookings assigned to you yet. Check back
+          later!
         </p>
       </mat-card-content>
     </mat-card>
@@ -97,21 +101,23 @@
       <div class="action-buttons">
         <button class="action-btn view-btn" (click)="viewBooking(booking)">
           <mat-icon>visibility</mat-icon>
-          View
+          View Details
         </button>
         @if (booking.status === 'Approved') {
-        <button
-          class="action-btn complete-btn"
-          (click)="completeBooking(booking)"
-        >
+        <button class="action-btn done-btn" (click)="markAsDone(booking)">
           <mat-icon>done_all</mat-icon>
-          Complete
+          Mark as Done
         </button>
+        } @else if (booking.status === 'Completed') {
+        <div class="completed-badge">
+          <mat-icon>check_circle</mat-icon>
+          Completed
+        </div>
         } @else {
-        <button class="action-btn edit-btn" (click)="editBooking(booking)">
-          <mat-icon>edit</mat-icon>
-          Edit
-        </button>
+        <div class="pending-badge">
+          <mat-icon>schedule</mat-icon>
+          Awaiting Approval
+        </div>
         }
       </div>
     </mat-card>

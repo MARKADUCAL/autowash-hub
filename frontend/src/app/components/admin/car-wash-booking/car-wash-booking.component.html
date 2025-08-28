@@ -1,18 +1,20 @@
 <div class="bookings-container">
   <div class="header">
     <div class="header-left">
+      <h2>Car Wash Bookings Management</h2>
+      <p class="header-subtitle">Manage and oversee all car wash bookings</p>
+    </div>
+    <div class="header-right">
       <mat-form-field appearance="outline" class="status-filter">
-        <mat-label>Status</mat-label>
+        <mat-label>Filter by Status</mat-label>
         <mat-select [(ngModel)]="selectedStatus">
-          <mat-option value="All">All</mat-option>
+          <mat-option value="All">All Bookings</mat-option>
           <mat-option value="Pending">Pending</mat-option>
           <mat-option value="Approved">Approved</mat-option>
           <mat-option value="Rejected">Rejected</mat-option>
           <mat-option value="Completed">Completed</mat-option>
         </mat-select>
       </mat-form-field>
-    </div>
-    <div class="header-right">
       <button mat-raised-button color="primary" (click)="addSlotBooking()">
         <mat-icon>add</mat-icon>
         Add Slot Booking
@@ -24,7 +26,53 @@
     </div>
   </div>
 
-  <div class="bookings-grid">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="loading-spinner">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Loading car wash bookings...</p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !loading" class="error-container">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <mat-icon class="error-icon">error</mat-icon>
+        <h3>Error Loading Bookings</h3>
+        <p>{{ error }}</p>
+        <button mat-raised-button color="primary" (click)="loadBookings()">
+          Try Again
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- No Bookings State -->
+  <div
+    *ngIf="!loading && !error && filterBookings(selectedStatus).length === 0"
+    class="no-bookings-container"
+  >
+    <mat-card class="no-bookings-card">
+      <mat-card-content>
+        <mat-icon class="no-bookings-icon">assignment</mat-icon>
+        <h3>No Bookings Found</h3>
+        <p>
+          {{
+            selectedStatus === "All"
+              ? "No car wash bookings available yet."
+              : "No " + selectedStatus.toLowerCase() + " bookings found."
+          }}
+        </p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Bookings Grid -->
+  <div
+    *ngIf="!loading && !error && filterBookings(selectedStatus).length > 0"
+    class="bookings-grid"
+  >
     @for (booking of filterBookings(selectedStatus); track booking.id) {
     <mat-card class="booking-card" [ngClass]="booking.status.toLowerCase()">
       <div class="card-top">
@@ -71,7 +119,7 @@
       <div class="action-buttons">
         <button class="action-btn view-btn" (click)="viewBooking(booking)">
           <mat-icon>visibility</mat-icon>
-          View
+          View Details
         </button>
         @if (booking.status === 'Pending') {
         <button
@@ -93,6 +141,11 @@
           <mat-icon>done_all</mat-icon>
           Complete
         </button>
+        } @else if (booking.status === 'Completed') {
+        <div class="completed-badge">
+          <mat-icon>check_circle</mat-icon>
+          Completed
+        </div>
         } @else {
         <button class="action-btn edit-btn" (click)="editBooking(booking)">
           <mat-icon>edit</mat-icon>
