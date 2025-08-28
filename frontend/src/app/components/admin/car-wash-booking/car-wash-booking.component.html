@@ -114,6 +114,15 @@
             <mat-icon>attach_money</mat-icon> {{ booking.price | currency }}
           </div>
         </div>
+
+        <!-- Rejection Reason Indicator -->
+        <div
+          class="rejection-indicator"
+          *ngIf="booking.status === 'Rejected' && booking.rejectionReason"
+        >
+          <mat-icon class="rejection-icon">info</mat-icon>
+          <span class="rejection-text">Rejection reason provided</span>
+        </div>
       </div>
 
       <div class="action-buttons">

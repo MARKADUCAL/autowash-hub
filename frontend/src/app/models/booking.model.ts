@@ -28,6 +28,9 @@ export interface Booking extends BookingForm {
   employee_first_name?: string;
   employee_last_name?: string;
   employee_position?: string;
+  // Rejection reason for rejected bookings
+  rejectionReason?: string;
+  rejection_reason?: string;
 }
 
 export enum BookingStatus {
@@ -36,6 +39,7 @@ export enum BookingStatus {
   CONFIRMED = 'confirmed',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
+  REJECTED = 'rejected',
 }
 
 export interface CarWashService {

@@ -335,7 +335,8 @@ class Put {
             $hasReason = isset($data->reason) && trim((string)$data->reason) !== '';
             if ($hasReason) {
                 $reasonText = trim((string)$data->reason);
-                $reasonNote = "Customer reason: " . $reasonText;
+                // Use "Rejection reason:" for admin rejections, "Customer reason:" for customer cancellations
+                $reasonNote = $normalizedStatus === 'Rejected' ? "Rejection reason: " . $reasonText : "Customer reason: " . $reasonText;
                 $sql = "UPDATE bookings SET status = ?, notes = CONCAT(COALESCE(notes, ''), CASE WHEN COALESCE(notes, '') = '' THEN '' ELSE ' | ' END, ?), updated_at = CURRENT_TIMESTAMP WHERE id = ?";
                 $stmt = $this->pdo->prepare($sql);
                 $result = $stmt->execute([$normalizedStatus, $reasonNote, $bookingId]);

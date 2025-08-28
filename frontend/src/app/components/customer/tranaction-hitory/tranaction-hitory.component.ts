@@ -499,6 +499,34 @@ export class TranactionHitoryComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Helper method to get rejection reason with fallback to notes field
+  getRejectionReason(booking: Booking): string | null {
+    // First check dedicated rejection reason fields
+    if (booking.rejectionReason) {
+      return booking.rejectionReason;
+    }
+    if (booking.rejection_reason) {
+      return booking.rejection_reason;
+    }
+    
+    // Fallback: check notes field for rejection reason
+    if (booking.status === 'rejected' && booking.notes) {
+      const notes = booking.notes;
+      // Check for "Rejection reason:" prefix
+      if (notes.includes('Rejection reason:')) {
+        return notes.split('Rejection reason:')[1]?.trim() || null;
+      }
+      // Check for "Customer reason:" prefix (legacy format)
+      if (notes.includes('Customer reason:')) {
+        return notes.split('Customer reason:')[1]?.trim() || null;
+      }
+      // If no prefix found but status is rejected, return the entire notes
+      return notes.trim();
+    }
+    
+    return null;
+  }
+
   formatTime(time: string): string {
     if (!time) return '';
 

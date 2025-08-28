@@ -10,6 +10,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatInputModule } from '@angular/material/input';
 import {
   MatDialog,
   MatDialogModule,
@@ -51,6 +52,79 @@ interface CarWashBooking {
   washDate?: string;
   washTime?: string;
   serviceName?: string;
+  rejectionReason?: string;
+}
+
+// Rejection Dialog Component
+@Component({
+  selector: 'app-rejection-dialog',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatDialogModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCardModule,
+  ],
+  template: `
+    <div class="rejection-dialog">
+      <h2 mat-dialog-title>Reject Booking</h2>
+      <mat-dialog-content>
+        <p>Please provide a reason for rejecting this booking:</p>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Rejection Reason</mat-label>
+          <textarea
+            matInput
+            [(ngModel)]="rejectionReason"
+            placeholder="Enter the reason for rejection..."
+            rows="4"
+            required
+          ></textarea>
+        </mat-form-field>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button mat-dialog-close>Cancel</button>
+        <button
+          mat-raised-button
+          color="warn"
+          [disabled]="!rejectionReason || !rejectionReason.trim()"
+          (click)="confirmRejection()"
+        >
+          Reject Booking
+        </button>
+      </mat-dialog-actions>
+    </div>
+  `,
+  styles: [
+    `
+      .rejection-dialog {
+        padding: 20px;
+        min-width: 400px;
+      }
+      .full-width {
+        width: 100%;
+      }
+      mat-dialog-actions {
+        margin-top: 20px;
+      }
+    `,
+  ],
+})
+export class RejectionDialogComponent {
+  rejectionReason: string = '';
+
+  constructor(
+    public dialogRef: MatDialogRef<RejectionDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: { booking: CarWashBooking }
+  ) {}
+
+  confirmRejection(): void {
+    if (this.rejectionReason?.trim()) {
+      this.dialogRef.close(this.rejectionReason.trim());
+    }
+  }
 }
 
 @Component({
@@ -67,6 +141,7 @@ interface CarWashBooking {
     MatProgressSpinnerModule,
     HttpClientModule,
     MatDialogModule,
+    MatInputModule,
   ],
   templateUrl: './car-wash-booking.component.html',
   styleUrl: './car-wash-booking.component.css',
@@ -152,14 +227,28 @@ export class CarWashBookingComponent implements OnInit {
   }
 
   rejectBooking(booking: CarWashBooking): void {
-    const prev = booking.status;
-    booking.status = 'Rejected';
-    this.bookingService.updateBookingStatus(booking.id, 'Rejected').subscribe({
-      next: () => this.showNotification('Booking rejected successfully'),
-      error: (err) => {
-        booking.status = prev;
-        this.showNotification(err.message || 'Failed to reject booking');
-      },
+    const dialogRef = this.dialog.open(RejectionDialogComponent, {
+      width: '500px',
+      data: { booking },
+    });
+
+    dialogRef.afterClosed().subscribe((reason: string) => {
+      if (reason) {
+        const prev = booking.status;
+        booking.status = 'Rejected';
+        booking.rejectionReason = reason;
+
+        this.bookingService
+          .updateBookingStatus(booking.id, 'Rejected', reason)
+          .subscribe({
+            next: () => this.showNotification('Booking rejected successfully'),
+            error: (err) => {
+              booking.status = prev;
+              delete booking.rejectionReason;
+              this.showNotification(err.message || 'Failed to reject booking');
+            },
+          });
+      }
     });
   }
 
@@ -251,6 +340,7 @@ export class CarWashBookingComponent implements OnInit {
             washDate: b.washDate ?? b.wash_date,
             washTime: b.washTime ?? b.wash_time,
             serviceName: b.serviceName ?? b.service_name,
+            rejectionReason: b.rejectionReason ?? b.rejection_reason,
           };
 
           return booking;
@@ -607,6 +697,27 @@ export class CarWashBookingComponent implements OnInit {
           </div>
         </div>
 
+        <!-- Rejection Reason Section (only for rejected bookings) -->
+        <div
+          class="info-section"
+          *ngIf="
+            data.booking.status === 'Rejected' && data.booking.rejectionReason
+          "
+        >
+          <div class="section-header">
+            <mat-icon class="section-icon">cancel</mat-icon>
+            <h3>Rejection Reason</h3>
+          </div>
+          <div class="info-grid">
+            <div class="info-item notes-item">
+              <span class="label">Reason for Rejection</span>
+              <span class="value notes-text rejection-reason">{{
+                data.booking.rejectionReason
+              }}</span>
+            </div>
+          </div>
+        </div>
+
         <!-- Notes Section -->
         <div class="info-section" *ngIf="data.booking.notes">
           <div class="section-header">
@@ -860,6 +971,15 @@ export class CarWashBookingComponent implements OnInit {
         word-wrap: break-word;
         max-width: 100%;
         line-height: 1.5;
+      }
+
+      .rejection-reason {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        padding: 12px;
+        color: #dc2626;
+        font-weight: 500;
       }
 
       .no-assignment {

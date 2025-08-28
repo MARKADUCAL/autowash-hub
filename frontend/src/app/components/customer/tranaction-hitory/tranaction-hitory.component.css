@@ -1402,3 +1402,72 @@
   transform: none !important;
   box-shadow: none !important;
 }
+
+/* Rejection Reason Styles */
+.rejection-section {
+  margin-top: 16px;
+  padding: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+}
+
+.rejection-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.rejection-icon {
+  font-size: 16px;
+}
+
+.rejection-title {
+  font-weight: 600;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+.rejection-content {
+  color: #991b1b;
+  font-size: 14px;
+  line-height: 1.4;
+  padding-left: 24px;
+}
+
+/* Rejection Card in Modal */
+.rejection-card {
+  border-left: 4px solid #dc2626;
+}
+
+.rejection-card .detail-header {
+  color: #dc2626;
+}
+
+.rejection-card .detail-header .detail-icon {
+  color: #dc2626;
+}
+
+.rejection-reason {
+  color: #991b1b;
+  font-weight: 500;
+  background: #fef2f2;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #fecaca;
+  display: block;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* Status badge for rejected bookings */
+.status-rejected {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.status-rejected .status-icon {
+  color: #dc2626;
+}

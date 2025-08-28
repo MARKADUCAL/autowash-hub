@@ -177,7 +177,16 @@ class Get extends GlobalMethods {
                         e.first_name as employee_first_name,
                         e.last_name as employee_last_name,
                         e.position as employee_position,
-                        TRIM(CONCAT(COALESCE(e.first_name,''), ' ', COALESCE(e.last_name,''))) as assigned_employee_name
+                        TRIM(CONCAT(COALESCE(e.first_name,''), ' ', COALESCE(e.last_name,''))) as assigned_employee_name,
+                        CASE 
+                            WHEN b.status = 'Rejected' AND b.notes LIKE '%Rejection reason:%' 
+                            THEN TRIM(SUBSTRING_INDEX(b.notes, 'Rejection reason:', -1))
+                            WHEN b.status = 'Rejected' AND b.notes LIKE '%Customer reason:%' 
+                            THEN TRIM(SUBSTRING_INDEX(b.notes, 'Customer reason:', -1))
+                            WHEN b.status = 'Rejected' AND b.notes IS NOT NULL AND b.notes != ''
+                            THEN TRIM(b.notes)
+                            ELSE NULL 
+                        END as rejection_reason
                     FROM 
                         bookings b
                     LEFT JOIN 
@@ -226,7 +235,16 @@ class Get extends GlobalMethods {
                         s.duration_minutes as serviceDuration,
                         e.first_name as employee_first_name,
                         e.last_name as employee_last_name,
-                        e.position as employee_position
+                        e.position as employee_position,
+                        CASE 
+                            WHEN b.status = 'Rejected' AND b.notes LIKE '%Rejection reason:%' 
+                            THEN TRIM(SUBSTRING_INDEX(b.notes, 'Rejection reason:', -1))
+                            WHEN b.status = 'Rejected' AND b.notes LIKE '%Customer reason:%' 
+                            THEN TRIM(SUBSTRING_INDEX(b.notes, 'Customer reason:', -1))
+                            WHEN b.status = 'Rejected' AND b.notes IS NOT NULL AND b.notes != ''
+                            THEN TRIM(b.notes)
+                            ELSE NULL 
+                        END as rejection_reason
                     FROM 
                         bookings b
                     JOIN 
@@ -273,7 +291,16 @@ class Get extends GlobalMethods {
                         s.name as serviceName,
                         s.description as serviceDescription,
                         s.duration_minutes as serviceDuration,
-                        TRIM(CONCAT(COALESCE(c.first_name,''), ' ', COALESCE(c.last_name,''))) as customerName
+                        TRIM(CONCAT(COALESCE(c.first_name,''), ' ', COALESCE(c.last_name,''))) as customerName,
+                        CASE 
+                            WHEN b.status = 'Rejected' AND b.notes LIKE '%Rejection reason:%' 
+                            THEN TRIM(SUBSTRING_INDEX(b.notes, 'Rejection reason:', -1))
+                            WHEN b.status = 'Rejected' AND b.notes LIKE '%Customer reason:%' 
+                            THEN TRIM(SUBSTRING_INDEX(b.notes, 'Customer reason:', -1))
+                            WHEN b.status = 'Rejected' AND b.notes IS NOT NULL AND b.notes != ''
+                            THEN TRIM(b.notes)
+                            ELSE NULL 
+                        END as rejection_reason
                     FROM 
                         bookings b
                     JOIN 

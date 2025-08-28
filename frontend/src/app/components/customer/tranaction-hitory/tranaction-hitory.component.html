@@ -72,6 +72,15 @@
         <span class="tab-text">Cancelled</span>
         <span class="tab-count">{{ getFilterCount("cancelled") }}</span>
       </button>
+      <button
+        class="filter-tab"
+        [class.active]="currentFilter === 'rejected'"
+        (click)="setFilter('rejected')"
+      >
+        <span class="tab-icon">🚫</span>
+        <span class="tab-text">Rejected</span>
+        <span class="tab-count">{{ getFilterCount("rejected") }}</span>
+      </button>
     </div>
   </div>
 
@@ -240,6 +249,20 @@
             <span class="amount">{{ booking.price }}</span>
           </div>
           <span class="price-label">Total Amount</span>
+        </div>
+
+        <!-- Rejection Reason Section (only for rejected bookings) -->
+        <div
+          class="rejection-section"
+          *ngIf="booking.status === 'rejected' && getRejectionReason(booking)"
+        >
+          <div class="rejection-header">
+            <span class="rejection-icon">🚫</span>
+            <span class="rejection-title">Rejection Reason</span>
+          </div>
+          <div class="rejection-content">
+            {{ getRejectionReason(booking) }}
+          </div>
         </div>
       </div>
 
@@ -412,6 +435,28 @@
             <div class="detail-row">
               <span class="label">Method:</span>
               <span class="value">{{ selectedBooking.paymentType }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rejection Reason Card (only for rejected bookings) -->
+        <div
+          class="detail-card rejection-card"
+          *ngIf="
+            selectedBooking.status === 'rejected' &&
+            getRejectionReason(selectedBooking)
+          "
+        >
+          <div class="detail-header">
+            <span class="detail-icon">🚫</span>
+            <h4>Rejection Information</h4>
+          </div>
+          <div class="detail-content">
+            <div class="detail-row">
+              <span class="label">Reason:</span>
+              <span class="value rejection-reason">{{
+                getRejectionReason(selectedBooking)
+              }}</span>
             </div>
           </div>
         </div>
