@@ -23,6 +23,11 @@ export interface Booking extends BookingForm {
   serviceDuration?: number;
   assignedEmployeeId?: number;
   assignedEmployeeName?: string;
+  // Add the actual properties returned by the backend API
+  assigned_employee_id?: number;
+  employee_first_name?: string;
+  employee_last_name?: string;
+  employee_position?: string;
 }
 
 export enum BookingStatus {

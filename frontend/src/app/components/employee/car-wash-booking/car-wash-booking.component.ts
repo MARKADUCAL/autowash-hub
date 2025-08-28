@@ -202,7 +202,8 @@ export class CarWashBookingComponent implements OnInit {
 
   private openBookingDialog(booking: CarWashBooking, mode: 'view' | 'edit') {
     const dialogRef = this.dialog.open(BookingDetailsDialogComponent, {
-      width: '420px',
+      width: '600px',
+      maxWidth: '90vw',
       data: { booking: { ...booking }, mode },
     });
 
@@ -238,64 +239,393 @@ export class CarWashBookingComponent implements OnInit {
     MatDialogModule,
     MatButtonModule,
     MatSelectModule,
+    MatIconModule,
   ],
   template: `
-    <h2 mat-dialog-title>
-      {{ data.mode === 'view' ? 'View Booking' : 'Edit Booking' }}
-    </h2>
-    <div mat-dialog-content class="dialog-content">
-      <div class="row">
-        <strong>Customer:</strong> {{ data.booking.customerName }}
-      </div>
-      <div class="row">
-        <strong>Vehicle:</strong> {{ data.booking.vehicleType }}
-      </div>
-      <div class="row">
-        <strong>Service:</strong>
-        {{ data.booking.serviceType || 'Standard Wash' }}
-      </div>
-      <div class="row">
-        <strong>Price:</strong> {{ data.booking.price | currency }}
-      </div>
-      <div class="row"><strong>Date:</strong> {{ data.booking.date }}</div>
-      <div class="row"><strong>Time:</strong> {{ data.booking.time }}</div>
-
-      <div class="row" *ngIf="data.mode === 'view'">
-        <strong>Status:</strong> {{ data.booking.status }}
+    <div class="modal-container">
+      <!-- Header -->
+      <div class="modal-header">
+        <div class="header-content">
+          <div class="header-icon">
+            <mat-icon>{{ data.mode === 'view' ? 'visibility' : 'edit' }}</mat-icon>
+          </div>
+          <div class="header-text">
+            <h2 class="modal-title">{{ data.mode === 'view' ? 'View Booking Details' : 'Edit Booking' }}</h2>
+            <p class="modal-subtitle">{{ data.mode === 'view' ? 'Review the complete booking information' : 'Update booking status and details' }}</p>
+          </div>
+        </div>
+        <button class="close-button" (click)="onClose()">
+          <mat-icon>close</mat-icon>
+        </button>
       </div>
 
-      <div class="row" *ngIf="data.mode === 'edit'">
-        <strong>Status:</strong>
-        <mat-select [(ngModel)]="editableStatus">
-          <mat-option value="Pending">Pending</mat-option>
-          <mat-option value="Approved">Approved</mat-option>
-          <mat-option value="Rejected">Rejected</mat-option>
-          <mat-option value="Completed">Completed</mat-option>
-        </mat-select>
+      <!-- Content -->
+      <div class="modal-content">
+        <!-- Customer Info Section -->
+        <div class="info-section">
+          <div class="section-header">
+            <mat-icon class="section-icon">person</mat-icon>
+            <h3>Customer Information</h3>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Customer Name</span>
+              <span class="value">{{ data.booking.customerName }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Vehicle Type</span>
+              <span class="value">{{ data.booking.vehicleType }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Service Info Section -->
+        <div class="info-section">
+          <div class="section-header">
+            <mat-icon class="section-icon">local_car_wash</mat-icon>
+            <h3>Service Details</h3>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Service Type</span>
+              <span class="value">{{ data.booking.serviceType || 'Standard Wash' }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Price</span>
+              <span class="value price">{{ data.booking.price | currency }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Schedule Info Section -->
+        <div class="info-section">
+          <div class="section-header">
+            <mat-icon class="section-icon">schedule</mat-icon>
+            <h3>Schedule</h3>
+          </div>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="label">Date</span>
+              <span class="value">{{ data.booking.date }}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Time</span>
+              <span class="value">{{ data.booking.time }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="info-section">
+          <div class="section-header">
+            <mat-icon class="section-icon">info</mat-icon>
+            <h3>Status</h3>
+          </div>
+          <div class="info-grid">
+            <div class="info-item" *ngIf="data.mode === 'view'">
+              <span class="label">Current Status</span>
+              <span class="status-chip status-{{ data.booking.status.toLowerCase() }}">
+                <span class="status-dot"></span>
+                {{ data.booking.status }}
+              </span>
+            </div>
+            <div class="info-item" *ngIf="data.mode === 'edit'">
+              <span class="label">Update Status</span>
+              <mat-select [(ngModel)]="editableStatus" class="status-select">
+                <mat-option value="Pending">Pending</mat-option>
+                <mat-option value="Approved">Approved</mat-option>
+                <mat-option value="Rejected">Rejected</mat-option>
+                <mat-option value="Completed">Completed</mat-option>
+              </mat-select>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-    <div mat-dialog-actions align="end">
-      <button mat-button (click)="onClose()">Close</button>
-      <button
-        mat-raised-button
-        color="primary"
-        *ngIf="data.mode === 'edit'"
-        (click)="onSave()"
-      >
-        Save
-      </button>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <button class="action-btn secondary-btn" (click)="onClose()">
+          <mat-icon>close</mat-icon>
+          Close
+        </button>
+        <button 
+          class="action-btn primary-btn" 
+          *ngIf="data.mode === 'edit'"
+          (click)="onSave()"
+        >
+          <mat-icon>save</mat-icon>
+          Save Changes
+        </button>
+      </div>
     </div>
   `,
   styles: [
     `
-      .dialog-content {
-        display: grid;
-        gap: 10px;
+      .modal-container {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        min-width: 500px;
+        max-width: 600px;
       }
-      .row {
+
+      .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+
+      .header-content {
         display: flex;
         align-items: center;
+        gap: 16px;
+      }
+
+      .header-icon {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        padding: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .header-icon mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+
+      .modal-title {
+        margin: 0 0 4px 0;
+        font-size: 20px;
+        font-weight: 600;
+      }
+
+      .modal-subtitle {
+        margin: 0;
+        font-size: 14px;
+        opacity: 0.9;
+        font-weight: 400;
+      }
+
+      .close-button {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        padding: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .close-button:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .close-button mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .modal-content {
+        padding: 24px;
+        max-height: 60vh;
+        overflow-y: auto;
+      }
+
+      .info-section {
+        margin-bottom: 24px;
+        padding: 20px;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .section-icon {
+        color: #667eea;
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .section-header h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+      }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+      }
+
+      .label {
+        font-weight: 600;
+        color: #475569;
+        font-size: 14px;
+      }
+
+      .value {
+        color: #1e293b;
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .value.price {
+        color: #059669;
+        font-weight: 700;
+        font-size: 16px;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: capitalize;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .status-pending {
+        background: #fff7ed;
+        color: #d97706;
+        border: 1px solid #fde68a;
+      }
+
+      .status-approved {
+        background: #ecfdf5;
+        color: #059669;
+        border: 1px solid #a7f3d0;
+      }
+
+      .status-rejected {
+        background: #fef2f2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+      }
+
+      .status-completed {
+        background: #f5f3ff;
+        color: #7c3aed;
+        border: 1px solid #ddd6fe;
+      }
+
+      .status-select {
+        min-width: 120px;
+      }
+
+      .modal-actions {
+        padding: 20px 24px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+      }
+
+      .action-btn {
+        display: inline-flex;
+        align-items: center;
         gap: 8px;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+      }
+
+      .action-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .secondary-btn {
+        background: #e2e8f0;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+      }
+
+      .secondary-btn:hover {
+        background: #cbd5e1;
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .primary-btn:hover {
+        background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 600px) {
+        .modal-container {
+          min-width: 90vw;
+          margin: 20px;
+        }
+
+        .modal-header {
+          padding: 20px;
+        }
+
+        .modal-content {
+          padding: 20px;
+        }
+
+        .info-item {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .modal-actions {
+          flex-direction: column;
+        }
+
+        .action-btn {
+          width: 100%;
+          justify-content: center;
+        }
       }
     `,
   ],

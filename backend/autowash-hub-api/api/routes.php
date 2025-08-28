@@ -1,7 +1,6 @@
 <?php
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// Production-safe: disable verbose error output on public hosting
+// (Some free hosts flag ini_set/error_reporting as dangerous)
 
 require_once "./config/env.php";
 loadEnv(__DIR__ . '/.env');

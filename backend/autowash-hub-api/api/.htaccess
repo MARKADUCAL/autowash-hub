@@ -1,28 +1,8 @@
 RewriteEngine On
 
-# Handle Authorization header on some shared hosts
-RewriteCond %{HTTP:Authorization} .
-RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
-
-# Front controller routing: /api/<route> -> /api/index.php?request=<route>
+# Only rewrite if the request is not a real file or directory
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.+)$ index.php?request=$1 [QSA,L]
 
-# PHP settings suitable for InfinityFree
-php_value display_errors Off
-php_value max_execution_time 120
-php_value memory_limit 128M
-<IfModule mod_headers.c>
-    Header set Access-Control-Allow-Origin "http://localhost:4200"
-    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
-    Header set Access-Control-Allow-Credentials "true"
-</IfModule>
-
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^(.*)$ routes.php?request=$1 [L,QSA]
-</IfModule>
+# Route everything to routes.php with request path
+RewriteRule ^(.*)$ routes.php?request=$1 [L,QSA]
