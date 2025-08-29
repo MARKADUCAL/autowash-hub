@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-employee-register',
@@ -43,37 +44,35 @@ export class EmployeeRegisterComponent implements OnInit {
 
   private prefillNextEmployeeId(): void {
     // Fetch all employees and compute the smallest available ID (EMP-XXX)
-    this.http
-      .get<any>('http://localhost/autowash-hub-api/api/get_all_employees')
-      .subscribe({
-        next: (response) => {
-          const employees = response?.payload?.employees || [];
+    this.http.get<any>(`${environment.apiUrl}/get_all_employees`).subscribe({
+      next: (response) => {
+        const employees = response?.payload?.employees || [];
 
-          // Build a set of used numeric identifiers
-          const usedNumbers = new Set<number>();
-          for (const emp of employees) {
-            const numeric =
-              typeof emp.id === 'number' && emp.id > 0
-                ? emp.id
-                : this.parseEmployeeIdNumber(emp.employee_id);
-            if (numeric > 0) usedNumbers.add(numeric);
-          }
+        // Build a set of used numeric identifiers
+        const usedNumbers = new Set<number>();
+        for (const emp of employees) {
+          const numeric =
+            typeof emp.id === 'number' && emp.id > 0
+              ? emp.id
+              : this.parseEmployeeIdNumber(emp.employee_id);
+          if (numeric > 0) usedNumbers.add(numeric);
+        }
 
-          // Find the smallest missing positive integer starting from 1
-          let candidate = 1;
-          while (usedNumbers.has(candidate)) {
-            candidate += 1;
-          }
+        // Find the smallest missing positive integer starting from 1
+        let candidate = 1;
+        while (usedNumbers.has(candidate)) {
+          candidate += 1;
+        }
 
-          this.employee.employee_id = this.formatEmployeeId(candidate);
-        },
-        error: () => {
-          // Fallback to first ID if request fails
-          if (!this.employee.employee_id) {
-            this.employee.employee_id = this.formatEmployeeId(1);
-          }
-        },
-      });
+        this.employee.employee_id = this.formatEmployeeId(candidate);
+      },
+      error: () => {
+        // Fallback to first ID if request fails
+        if (!this.employee.employee_id) {
+          this.employee.employee_id = this.formatEmployeeId(1);
+        }
+      },
+    });
   }
 
   private parseEmployeeIdNumber(employeeId: string): number {
@@ -166,11 +165,9 @@ export class EmployeeRegisterComponent implements OnInit {
     });
 
     this.http
-      .post(
-        'http://localhost/autowash-hub-api/api/register_employee',
-        registrationData,
-        { headers: { 'Content-Type': 'application/json' } }
-      )
+      .post(`${environment.apiUrl}/register_employee`, registrationData, {
+        headers: { 'Content-Type': 'application/json' },
+      })
       .subscribe({
         next: (response: any) => {
           this.isLoading = false;

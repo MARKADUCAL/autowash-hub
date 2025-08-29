@@ -8,6 +8,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatMenuModule } from '@angular/material/menu';
 import { Chart } from 'chart.js/auto';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../environments/environment';
 
 interface Task {
   id: number;
@@ -88,7 +89,7 @@ export class DashboardComponent implements OnInit {
 
   private taskChart: Chart | undefined;
   private ratingChart: Chart | undefined;
-  private apiUrl = 'http://localhost/autowash-hub-api/api';
+  private apiUrl = environment.apiUrl;
 
   constructor(
     private http: HttpClient,

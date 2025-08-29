@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost/autowash-hub-api/api',
+  apiUrl: 'https://autowash-hub.rf.gd/api',
 };
